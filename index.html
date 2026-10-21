@@ -969,8 +969,11 @@
 
       /* ---------- tap-a-word lookup (点词查意) ----------
          Tapping an English word in a lesson's 英译 line opens a small card
-         with its ECDICT 音标 + 中文释义 and a 朗读发音 button (speechSynthesis,
-         no external audio). The word click is intercepted in the capture
+         with its ECDICT 音标 + 中文释义 and a 朗读发音 button. The button
+         plays a real recorded pronunciation (Youdao dictvoice, US English)
+         for the word's lemma through one shared Audio element; if that
+         voice fails to load or play it falls back to speechSynthesis, so
+         the button always speaks. The word click is intercepted in the capture
          phase on the reader body and stopped there, so it can never reach
          the verse block's tap-to-listen toggle; taps anywhere else in the
          verse behave exactly as before. */
@@ -980,14 +983,24 @@
       var wordPopLemma = document.getElementById("wordPopLemma");
       var wordPopDefs = document.getElementById("wordPopDefs");
       var popWord = null;   /* surface word shown in the open card */
+      var popLemma = null;  /* dictionary lemma (the span's data-k): the word actually pronounced */
+      /* One shared player for every card's 朗读发音. wordAttempt is a
+         generation counter: stopping or switching words bumps it, so a
+         late error from an older word can never hijack the current one. */
+      var wordAudio = new Audio();
+      wordAudio.preload = "none";
+      var wordAttempt = 0;
 
       function stopSpeech() {
+        wordAttempt++;
         if ("speechSynthesis" in window) speechSynthesis.cancel();
+        wordAudio.pause();
       }
       function hideWordPop() {
         if (wordPop.classList.contains("hidden")) return;
         wordPop.classList.add("hidden");
         popWord = null;
+        popLemma = null;
         stopSpeech();
       }
       function showWordPop(span) {
@@ -996,6 +1009,7 @@
         if (!entry) return;
         stopSpeech();   /* switching words drops any reading in progress */
         popWord = span.textContent;
+        popLemma = key;
         wordPopWord.textContent = popWord;
         wordPopPhon.textContent = entry.p ? "/" + entry.p + "/" : "";
         var base = popWord.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -1034,13 +1048,12 @@
       document.getElementById("wordPopClose").addEventListener("click", function () { hideWordPop(); });
       document.getElementById("readerBody").addEventListener("scroll", hideWordPop);
       reader.addEventListener("close", hideWordPop);
-      document.getElementById("wordPopSpeak").addEventListener("click", function () {
-        if (!popWord) return;
-        /* Reading a word aloud first pauses the lesson audio (no resume). */
-        document.getElementById("readerBody").querySelectorAll("audio").forEach(function (a) { a.pause(); });
+      /* Fallback voice: the original speechSynthesis reading, kept so the
+         button still speaks when the recorded pronunciation cannot play. */
+      function speakWordTTS(word) {
         if (!("speechSynthesis" in window)) return;
         speechSynthesis.cancel();
-        var u = new SpeechSynthesisUtterance(popWord);
+        var u = new SpeechSynthesisUtterance(word);
         var voices = speechSynthesis.getVoices();
         var gb = null, us = null;
         voices.forEach(function (v) {
@@ -1050,6 +1063,32 @@
         if (gb) { u.voice = gb; u.lang = "en-GB"; } else if (us) { u.voice = us; u.lang = "en-US"; } else { u.lang = "en-US"; }
         u.rate = 0.9;
         speechSynthesis.speak(u);
+      }
+      /* Primary voice: Youdao dictvoice's recorded US pronunciation of the
+         lemma, played through the shared wordAudio element. A load error,
+         a rejected play() promise, or a synchronous failure falls back to
+         speechSynthesis exactly once for this tap. */
+      function speakWord(word) {
+        stopSpeech();
+        var attempt = wordAttempt;
+        var live = true;   /* this attempt may still fall back */
+        function fallback() {
+          if (!live || attempt !== wordAttempt) return;
+          live = false;
+          speakWordTTS(word);
+        }
+        wordAudio.onerror = fallback;
+        wordAudio.onplaying = function () { if (attempt === wordAttempt) live = false; };
+        wordAudio.src = "https://dict.youdao.com/dictvoice?audio=" + encodeURIComponent(word) + "&type=2";
+        var p;
+        try { p = wordAudio.play(); } catch (err) { fallback(); return; }
+        if (p && typeof p.catch === "function") p.catch(fallback);
+      }
+      document.getElementById("wordPopSpeak").addEventListener("click", function () {
+        if (!popWord) return;
+        /* Reading a word aloud first pauses the lesson audio (no resume). */
+        document.getElementById("readerBody").querySelectorAll("audio").forEach(function (a) { a.pause(); });
+        speakWord(popLemma || popWord);
       });
 
       /* ---------- lightbox ---------- */
