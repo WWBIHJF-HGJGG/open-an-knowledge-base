@@ -1,2 +1,0 @@
-GitHub sync push test - 2026-10-21 23:21 CST
-This file verifies the write path and will be deleted right after.
