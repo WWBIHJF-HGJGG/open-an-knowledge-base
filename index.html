@@ -217,6 +217,9 @@
         box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
       }
       dialog.reader::backdrop { background: rgba(20, 18, 12, 0.55); }
+      dialog.reader[open] { display: flex; flex-direction: column; }
+      .reader-head { flex: none; }
+      .reader-body { flex: 1 1 auto; min-height: 0; }
       .reader-head {
         position: sticky; top: 0;
         background: var(--surface);
@@ -254,6 +257,15 @@
       .audio-item { margin-top: 12px; }
       .audio-item .audio-label { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 5px; }
       .audio-item audio { width: 100%; display: block; }
+      /* lesson player stays pinned to the top of the reader while scrolling */
+      .reader-body > .audio-box {
+        position: sticky; top: -20px; z-index: 6;
+        box-shadow: 0 14px 22px -16px rgba(60, 48, 24, 0.55);
+      }
+      /* audio-only view (「听音频」) */
+      .audio-view-note { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 4px; line-height: 1.7; }
+      .audio-view-body .audio-item { margin-top: 16px; }
+      .audio-view-body .audio-item audio { width: 100%; display: block; }
       .full-text { font-size: 16.5px; line-height: 1.95; }
       .full-text p { margin: 0 0 1em; overflow-wrap: anywhere; }
       .full-text a { color: var(--accent); overflow-wrap: anywhere; }
@@ -309,6 +321,11 @@
         letter-spacing: 0;
         opacity: 0.55;
       }
+      .full-text .q-verse.q-paused {
+        background: var(--surface-2);
+        box-shadow: inset 0 0 0 1px var(--line);
+      }
+      .full-text .q-verse.q-paused .q-num::after { content: "❚❚"; opacity: 0.7; }
 
       /* ---------- lightbox ---------- */
       dialog.lightbox {
@@ -372,6 +389,17 @@
         <button class="reader-close" id="readerClose" aria-label="关闭">✕</button>
       </div>
       <div class="reader-body" id="readerBody"></div>
+    </dialog>
+
+    <dialog class="reader" id="audioView" aria-label="听音频">
+      <div class="reader-head">
+        <div class="meta">
+          <div class="entry-top" id="audioViewMeta"></div>
+          <h2 id="audioViewTitle"></h2>
+        </div>
+        <button class="reader-close" id="audioViewClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="reader-body audio-view-body" id="audioViewBody"></div>
     </dialog>
 
     <dialog class="lightbox" id="lightbox" aria-label="卡片大图">
@@ -632,7 +660,7 @@
           ab.className = "btn";
           ab.type = "button";
           ab.textContent = "听音频";
-          ab.addEventListener("click", function () { openReader(e); });
+          ab.addEventListener("click", function () { openAudioView(e); });
           foot.appendChild(ab);
         }
         if (e.card) {
@@ -679,12 +707,53 @@
         document.getElementById("readerBody").querySelectorAll("audio").forEach(function (a) { a.pause(); });
       });
 
+      /* ---------- audio-only view (「听音频」) ----------
+         Shows just the lesson's audio: title, the standard note, and one
+         controllable player per track. Opens playing (the tap on the list
+         card is the user gesture); only one track plays at a time; closing
+         the view stops playback and returns to the list. */
+      var audioView = document.getElementById("audioView");
+      function openAudioView(e) {
+        document.getElementById("audioViewMeta").innerHTML =
+          tagHtml(e) + '<span class="time">' + e.date + " " + weekdayOf(e.date) + "</span>";
+        document.getElementById("audioViewTitle").textContent = e.title;
+        var body = document.getElementById("audioViewBody");
+        var html = '<p class="audio-view-note">每一节先诵读原文（诵读者：阿法西），接着朗读英文译文（朗读者：Ibrahim Walk）。</p>';
+        e.audio.forEach(function (a) {
+          html += '<div class="audio-item"><p class="audio-label">' + esc(a.label) + "</p>" +
+            '<audio controls preload="metadata" src="assets/' + esc(a.src) + '"></audio></div>';
+        });
+        body.innerHTML = html;
+        var tracks = Array.prototype.slice.call(body.querySelectorAll("audio"));
+        tracks.forEach(function (au) {
+          au.addEventListener("play", function () {
+            tracks.forEach(function (o) { if (o !== au && !o.paused) o.pause(); });
+          });
+        });
+        body.scrollTop = 0;
+        audioView.showModal();
+        if (tracks.length) {
+          var p = tracks[0].play();
+          if (p && p.catch) p.catch(function () {});
+        }
+      }
+      document.getElementById("audioViewClose").addEventListener("click", function () { audioView.close(); });
+      audioView.addEventListener("click", function (ev) { if (ev.target === audioView) audioView.close(); });
+      audioView.addEventListener("close", function () {
+        audioView.querySelectorAll("audio").forEach(function (a) { a.pause(); });
+      });
+
       /* ---------- tap-to-listen (Quran lessons) ----------
          Each verse block maps to one [start, end] segment of one audio
          player; the Arabic recitation and the English reading inside a
          segment play together and are never split. Tapping a verse seeks
-         to its start, plays, and auto-pauses at its end. During plain
-         continuous playback the verse under the playhead is highlighted. */
+         to its start and plays just that segment, auto-pausing at its end.
+         Tapping the same verse while it plays pauses in place (progress
+         frozen, verse stays highlighted in a paused style); tapping it
+         again resumes from the frozen point to the segment end. Tapping
+         any other verse switches to it at once. Pressing the player's own
+         play button plays the whole track continuously — the highlight
+         follows verse by verse and no segment-end pause applies. */
       function wireTapToListen(body) {
         var audios = Array.prototype.slice.call(body.querySelectorAll("audio"));
         if (!audios.length) return;
@@ -711,8 +780,26 @@
         });
         if (!verseMap.size) return;
 
-        var stopAt = null, stopAudio = null, pendingStart = null;
+        var seg = null;        /* verse segment targeted by taps: {audio, el, start, end} */
+        var segStop = null;    /* end time at which seg playback auto-pauses */
 
+        /* A play() issued by a verse tap must not be mistaken for the user
+           pressing the player's own play button. Discrimination is purely
+           event-driven (no clocks, no timers): each tap that starts a
+           paused player leaves a one-shot token on that player
+           (au._tapPlay); the next "play" event on it spends the token and
+           keeps the segment, while a "play" with no token came from the
+           player's own controls and ends segment mode. Any "pause" or
+           "ended" on the player also drops an unspent token. */
+        function tapPlay(au) {
+          if (au.paused) au._tapPlay = true;
+          var p = au.play();
+          if (p && p.catch) p.catch(function () { au._tapPlay = false; });
+        }
+        function clearSeg() {
+          seg = null; segStop = null;
+          body.querySelectorAll(".q-verse.q-paused").forEach(function (x) { x.classList.remove("q-paused"); });
+        }
         function setPlaying(verseEl) {
           body.querySelectorAll(".q-verse.q-playing").forEach(function (x) { x.classList.remove("q-playing"); });
           if (verseEl) verseEl.classList.add("q-playing");
@@ -727,36 +814,64 @@
         audios.forEach(function (au) {
           if (!au._timing) return;
           au.addEventListener("timeupdate", function () {
-            if (stopAudio === au && stopAt !== null && au.currentTime >= stopAt) {
+            if (seg && seg.audio === au && segStop !== null && au.currentTime >= segStop) {
               au.pause();
-              stopAt = null; stopAudio = null;
+              var doneEl = seg.el;
+              clearSeg();           /* finished: next tap on it replays from its start */
+              setPlaying(doneEl);   /* the verse just read stays highlighted */
               return;
             }
             if (!au.paused) setPlaying(verseForTime(au, au.currentTime));
           });
           au.addEventListener("play", function () {
             audios.forEach(function (o) { if (o !== au && !o.paused) o.pause(); });
-            setPlaying(verseForTime(au, au.currentTime));
-          });
-          au.addEventListener("seeked", function () {
-            if (stopAudio === au && pendingStart !== null && Math.abs(au.currentTime - pendingStart) < 0.75) {
-              pendingStart = null;
-            } else if (stopAudio === au) {
-              stopAt = null; stopAudio = null; pendingStart = null;
+            if (au._tapPlay) {
+              au._tapPlay = false;   /* this play was ordered by a verse tap */
+            } else if (seg) {
+              /* Started from the player's own controls: play the whole
+                 track continuously, no segment-end pause. */
+              clearSeg();
             }
             setPlaying(verseForTime(au, au.currentTime));
           });
-          au.addEventListener("ended", function () { setPlaying(null); });
+          au.addEventListener("pause", function () { au._tapPlay = false; });
+          au.addEventListener("seeked", function () {
+            if (seg && seg.audio === au) {
+              /* Our verse jump lands on the segment start — and a browser
+                 may fire "seeked" more than once for it, so recognize the
+                 jump by where the playhead landed, not by counting events.
+                 A seek landing anywhere else is the user's own: seg ends. */
+              if (Math.abs(au.currentTime - seg.start) >= 0.75) clearSeg();
+            }
+            setPlaying(verseForTime(au, au.currentTime));
+          });
+          au.addEventListener("ended", function () { au._tapPlay = false; clearSeg(); setPlaying(null); });
         });
         verseMap.forEach(function (info, el) {
           el.addEventListener("click", function () {
             var au = info.audio;
+            if (seg && seg.el === el) {
+              if (!au.paused) {
+                /* Second tap on the verse being read: pause in place. */
+                au.pause();
+                el.classList.add("q-paused");
+              } else {
+                /* Tap again while paused on this verse: resume from the
+                   frozen point, still stopping at the verse end. */
+                el.classList.remove("q-paused");
+                segStop = info.end;
+                tapPlay(au);
+              }
+              return;
+            }
+            /* Any other verse: switch to it and play just that segment. */
             audios.forEach(function (o) { if (o !== au && !o.paused) o.pause(); });
-            stopAt = info.end; stopAudio = au; pendingStart = info.start;
+            clearSeg();
+            seg = { audio: au, el: el, start: info.start, end: info.end };
+            segStop = info.end;
             try { au.currentTime = info.start; } catch (err) {}
             setPlaying(el);
-            var p = au.play();
-            if (p && p.catch) p.catch(function () {});
+            tapPlay(au);
           });
         });
       }
