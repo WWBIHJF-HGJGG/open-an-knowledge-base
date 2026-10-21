@@ -8,7 +8,7 @@
     <title>推送回顾</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700&family=Amiri+Quran&family=Noto+Naskh+Arabic:wght@400;500;700&display=swap" rel="stylesheet" />
     <style>
       :root {
         color-scheme: light dark;
@@ -31,6 +31,10 @@
         --night-bg: #e9e3f2;
         --english: #a34a2a;
         --english-bg: #f3e0d3;
+        --q-ar: #1a1a1a;
+        --q-en: #33302a;
+        --q-zh: #d97757;
+        --q-num: #8d7c5f;
         --shadow: 0 1px 2px rgba(60, 48, 24, 0.08), 0 8px 24px rgba(60, 48, 24, 0.07);
       }
       @media (prefers-color-scheme: dark) {
@@ -54,6 +58,10 @@
           --night-bg: #322b42;
           --english: #e8a183;
           --english-bg: #3d2a20;
+          --q-ar: #f4efe3;
+          --q-en: #d9d2c2;
+          --q-zh: #eda27e;
+          --q-num: #a2937a;
           --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
         }
       }
@@ -251,6 +259,38 @@
       .full-text a { color: var(--accent); overflow-wrap: anywhere; }
       .full-text [dir="rtl"] { font-size: 1.12em; line-height: 2.1; }
 
+      /* ---------- quran lessons: tricolor standard (same as lesson PDFs) ---------- */
+      .full-text .q-chapter {
+        font-family: "Noto Serif SC", "Songti SC", serif;
+        font-size: 1.16em; font-weight: 700; color: var(--ink);
+        margin: 1.5em 0 0.9em;
+      }
+      .full-text .q-chapter:first-child { margin-top: 0.15em; }
+      .full-text .q-verse { margin: 0 0 1.6em; }
+      .full-text .q-num {
+        margin: 0 0 0.3em;
+        font-size: 0.8em; font-weight: 700; letter-spacing: 0.1em;
+        color: var(--q-num);
+      }
+      .full-text .q-ar {
+        display: block;
+        font-family: "Amiri Quran", "Noto Naskh Arabic", "Traditional Arabic", serif;
+        font-size: 1.45em; line-height: 1.9;
+        color: var(--q-ar);
+        text-align: right;
+        margin: 0 0 0.5em;
+      }
+      .full-text p.q-ar { margin: 0 0 0.45em; }
+      .full-text .q-ar-row { margin: 0 0 0.45em; }
+      .full-text .q-ar-row .q-ar { margin-bottom: 0; }
+      .full-text .q-en { color: var(--q-en); line-height: 1.8; margin: 0 0 0.35em; }
+      .full-text .q-zh { color: var(--q-zh); line-height: 1.85; margin: 0; }
+      .full-text .q-label {
+        color: var(--ink-soft); font-size: 0.76em; font-weight: 700;
+        letter-spacing: 0.05em; margin-right: 0.7em;
+      }
+      .full-text .q-ar-row .q-label { display: block; margin: 0 0 0.1em; }
+
       /* ---------- lightbox ---------- */
       dialog.lightbox {
         border: 0; padding: 0; background: transparent;
@@ -365,6 +405,61 @@
           var rtl = hasArabic(block) && !/[\u4e00-\u9fff]/.test(block);
           return '<p' + (rtl ? ' dir="rtl" lang="ar"' : "") + ">" + lines + "</p>";
         }).join("");
+      }
+
+      /* Quran lessons only: per-line tricolor layout, the same standard as the
+         lesson PDFs — Arabic black & large (RTL), English dark, Chinese #D97757. */
+      function linkifyEsc(s) {
+        return esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      }
+      function renderQuranText(text) {
+        var out = [];
+        var introBuf = [];
+        var verse = null;
+        var inBody = false;
+        function flushIntro() {
+          if (introBuf.length) {
+            out.push("<p>" + introBuf.map(linkifyEsc).join("<br>") + "</p>");
+            introBuf = [];
+          }
+        }
+        function flushVerse() {
+          if (verse) { out.push('<div class="q-verse">' + verse.join("") + "</div>"); verse = null; }
+        }
+        text.split("\n").forEach(function (raw) {
+          var ln = raw.trim();
+          if (!ln) { flushIntro(); return; }
+          var m = ln.match(/^【(\d+:\d+)】$/) || ln.match(/^(\d+:\d+)$/);
+          if (m) {
+            flushIntro(); flushVerse(); inBody = true;
+            verse = ['<p class="q-num">' + m[1] + "</p>"];
+            return;
+          }
+          if (ln.charAt(0) === "【") {
+            flushIntro(); flushVerse(); inBody = true;
+            out.push('<h3 class="q-chapter">' + linkifyEsc(ln.replace(/^【/, "").replace(/】$/, "")) + "</h3>");
+            return;
+          }
+          if (!inBody) { introBuf.push(ln); return; }
+          var html;
+          if (ln.indexOf("阿拉伯原文：") === 0) {
+            html = '<p class="q-ar-row"><span class="q-label">阿拉伯原文</span>' +
+              '<span class="q-ar" dir="rtl" lang="ar">' + esc(ln.slice("阿拉伯原文：".length).trim()) + "</span></p>";
+          } else if ((m = ln.match(/^(英译(?:（[^）]*）)?)：([\s\S]*)$/))) {
+            html = '<p class="q-en"><span class="q-label">' + esc(m[1]) + "</span>" + linkifyEsc(m[2]) + "</p>";
+          } else if ((m = ln.match(/^(中译(?:（[^）]*）)?)：([\s\S]*)$/))) {
+            html = '<p class="q-zh"><span class="q-label">' + esc(m[1]) + "</span>" + linkifyEsc(m[2]) + "</p>";
+          } else if (hasArabic(ln)) {
+            html = '<p class="q-ar" dir="rtl" lang="ar">' + esc(ln) + "</p>";
+          } else if (/[\u4e00-\u9fff]/.test(ln)) {
+            html = '<p class="q-zh">' + linkifyEsc(ln) + "</p>";
+          } else {
+            html = '<p class="q-en">' + linkifyEsc(ln) + "</p>";
+          }
+          if (verse) verse.push(html); else out.push(html);
+        });
+        flushIntro(); flushVerse();
+        return out.join("");
       }
 
       /* ---------- header summary ---------- */
@@ -510,7 +605,7 @@
           });
           html += "</div>";
         }
-        html += '<div class="full-text">' + renderText(e.text) + "</div>";
+        html += '<div class="full-text">' + (e.type === "古兰经学习" ? renderQuranText(e.text) : renderText(e.text)) + "</div>";
         body.innerHTML = html;
         body.scrollTop = 0;
         reader.showModal();
