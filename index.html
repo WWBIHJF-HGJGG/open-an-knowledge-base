@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>推送回顾</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f3ec;
+        --surface: #fffdf8;
+        --surface-2: #efe8da;
+        --ink: #26221b;
+        --ink-soft: #6d6455;
+        --line: #ddd2bf;
+        --accent: #2f6b52;
+        --accent-soft: #e3ede6;
+        --gold: #9a7422;
+        --morning: #a86f14;
+        --morning-bg: #f6ead2;
+        --paper: #47627e;
+        --paper-bg: #e2e9f0;
+        --noon: #2f6b52;
+        --noon-bg: #e0ece4;
+        --night: #5b4a72;
+        --night-bg: #e9e3f2;
+        --english: #a34a2a;
+        --english-bg: #f3e0d3;
+        --shadow: 0 1px 2px rgba(60, 48, 24, 0.08), 0 8px 24px rgba(60, 48, 24, 0.07);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #171a17;
+          --surface: #20241f;
+          --surface-2: #2a2e28;
+          --ink: #ece7da;
+          --ink-soft: #a89f8d;
+          --line: #3a3f36;
+          --accent: #7fbd9e;
+          --accent-soft: #26362c;
+          --gold: #d3ab54;
+          --morning: #e0aa4e;
+          --morning-bg: #3b2f1b;
+          --paper: #9db8d4;
+          --paper-bg: #27333f;
+          --noon: #8ccbab;
+          --noon-bg: #233730;
+          --night: #c0aee0;
+          --night-bg: #322b42;
+          --english: #e8a183;
+          --english-bg: #3d2a20;
+          --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+      }
+      .serif { font-family: "Noto Serif SC", "Songti SC", "SimSun", serif; }
+
+      .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 64px; }
+
+      /* ---------- header ---------- */
+      header.page-head { padding: 8px 0 20px; border-bottom: 2px solid var(--ink); }
+      header.page-head h1 {
+        margin: 0;
+        font-family: "Noto Serif SC", serif;
+        font-weight: 900;
+        font-size: clamp(30px, 6vw, 44px);
+        letter-spacing: 0.04em;
+        line-height: 1.15;
+      }
+      .head-sub {
+        margin: 10px 0 0;
+        color: var(--ink-soft);
+        font-size: 15px;
+      }
+      .head-sub b { color: var(--ink); font-weight: 700; }
+
+      /* ---------- controls ---------- */
+      .controls {
+        position: sticky; top: 0; z-index: 20;
+        background: var(--bg);
+        padding: 14px 0 10px;
+        border-bottom: 1px solid var(--line);
+      }
+      .search-row { display: flex; gap: 10px; }
+      .search-box {
+        flex: 1; display: flex; align-items: center; gap: 8px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0 12px;
+      }
+      .search-box svg { flex: none; color: var(--ink-soft); }
+      .search-box input {
+        flex: 1; min-width: 0;
+        border: 0; outline: 0; background: transparent;
+        color: var(--ink);
+        font: inherit; font-size: 15px;
+        padding: 10px 0;
+      }
+      .search-box input::placeholder { color: var(--ink-soft); }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .chip {
+        appearance: none; cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink);
+        font: inherit; font-size: 14px; font-weight: 500;
+        padding: 6px 14px;
+        border-radius: 999px;
+      }
+      .chip .n { color: var(--ink-soft); font-size: 12.5px; margin-left: 4px; }
+      .chip[aria-pressed="true"] {
+        background: var(--ink); color: var(--bg); border-color: var(--ink);
+      }
+      .chip[aria-pressed="true"] .n { color: inherit; opacity: 0.7; }
+
+      /* ---------- day sections ---------- */
+      .day { margin-top: 34px; }
+      .day-head {
+        display: flex; align-items: baseline; gap: 12px;
+        margin-bottom: 14px;
+      }
+      .day-head .d {
+        font-family: "Noto Serif SC", serif;
+        font-weight: 900; font-size: 22px;
+      }
+      .day-head .w { color: var(--ink-soft); font-size: 14px; }
+      .day-head .rule { flex: 1; border-top: 1px solid var(--line); transform: translateY(-4px); }
+      .day-head .c { color: var(--ink-soft); font-size: 13px; white-space: nowrap; }
+
+      .entries { display: grid; grid-template-columns: 1fr; gap: 16px; }
+      @media (min-width: 760px) {
+        .entries { grid-template-columns: 1fr 1fr; }
+        .entries .entry.wide { grid-column: 1 / -1; }
+      }
+
+      .entry {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 18px 18px 14px;
+        display: flex; flex-direction: column;
+      }
+      .entry-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .tag {
+        font-size: 13px; font-weight: 700;
+        padding: 2px 10px; border-radius: 999px;
+        letter-spacing: 0.06em;
+      }
+      .tag.morning { color: var(--morning); background: var(--morning-bg); }
+      .tag.paper { color: var(--paper); background: var(--paper-bg); }
+      .tag.noon { color: var(--noon); background: var(--noon-bg); }
+      .tag.night { color: var(--night); background: var(--night-bg); }
+      .tag.english { color: var(--english); background: var(--english-bg); }
+      .time { color: var(--ink-soft); font-size: 13px; }
+      .has-full { margin-left: auto; color: var(--ink-soft); font-size: 12.5px; }
+      .entry h2 {
+        margin: 10px 0 0;
+        font-family: "Noto Serif SC", serif;
+        font-weight: 700; font-size: 19px; line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+      .preview {
+        margin: 8px 0 0;
+        color: var(--ink-soft);
+        font-size: 14.5px; line-height: 1.7;
+        display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .entry-foot { margin-top: auto; padding-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+      .btn {
+        appearance: none; cursor: pointer;
+        font: inherit; font-size: 14px; font-weight: 500;
+        border-radius: 9px; padding: 8px 16px;
+        border: 1px solid var(--line);
+        background: var(--surface-2); color: var(--ink);
+      }
+      .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      @media (prefers-color-scheme: dark) {
+        .btn.primary { color: #10221a; }
+      }
+      .btn:active { transform: translateY(1px); }
+
+      .empty-note { color: var(--ink-soft); font-size: 14px; margin: 10px 0 0; }
+
+      /* ---------- reader dialog ---------- */
+      dialog.reader {
+        width: min(760px, calc(100vw - 24px));
+        max-height: calc(100dvh - 32px);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        color: var(--ink);
+        padding: 0;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+      }
+      dialog.reader::backdrop { background: rgba(20, 18, 12, 0.55); }
+      .reader-head {
+        position: sticky; top: 0;
+        background: var(--surface);
+        padding: 18px 22px 12px;
+        border-bottom: 1px solid var(--line);
+        display: flex; gap: 12px; align-items: flex-start;
+      }
+      .reader-head .meta { flex: 1; min-width: 0; }
+      .reader-head h2 {
+        margin: 6px 0 0;
+        font-family: "Noto Serif SC", serif;
+        font-size: 21px; line-height: 1.4; font-weight: 700;
+        overflow-wrap: anywhere;
+      }
+      .reader-close {
+        flex: none; appearance: none; cursor: pointer;
+        width: 38px; height: 38px; border-radius: 50%;
+        border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
+        font-size: 18px; line-height: 1;
+      }
+      .reader-body { padding: 20px 22px 28px; overflow-y: auto; }
+      .reader-body img.card-full {
+        display: block; width: min(340px, 100%); margin: 0 auto 22px;
+        border-radius: 10px; border: 1px solid var(--line);
+      }
+      .audio-box {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px 16px 16px;
+        margin: 0 0 22px;
+      }
+      .audio-box .audio-title { font-weight: 700; font-size: 15px; margin: 0; }
+      .audio-box .audio-note { color: var(--ink-soft); font-size: 13px; margin: 4px 0 0; }
+      .audio-item { margin-top: 12px; }
+      .audio-item .audio-label { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 5px; }
+      .audio-item audio { width: 100%; display: block; }
+      .full-text { font-size: 16.5px; line-height: 1.95; }
+      .full-text p { margin: 0 0 1em; overflow-wrap: anywhere; }
+      .full-text a { color: var(--accent); overflow-wrap: anywhere; }
+      .full-text [dir="rtl"] { font-size: 1.12em; line-height: 2.1; }
+
+      /* ---------- lightbox ---------- */
+      dialog.lightbox {
+        border: 0; padding: 0; background: transparent;
+        max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px);
+      }
+      dialog.lightbox::backdrop { background: rgba(10, 10, 8, 0.88); }
+      dialog.lightbox img {
+        display: block; max-width: 100%; max-height: calc(100dvh - 70px);
+        border-radius: 8px; margin: 0 auto;
+      }
+      .lightbox-bar { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; }
+      .lightbox-bar a, .lightbox-bar button {
+        appearance: none; cursor: pointer; font: inherit; font-size: 14px;
+        color: #f2eee2; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 8px; padding: 7px 14px; text-decoration: none;
+      }
+
+      .no-results {
+        margin-top: 40px; text-align: center; color: var(--ink-soft);
+        font-size: 15px; padding: 32px 16px;
+        border: 1px dashed var(--line); border-radius: 14px;
+      }
+      footer.page-foot {
+        margin-top: 56px; padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--ink-soft); font-size: 13.5px;
+      }
+      .hidden { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="page-head">
+        <h1>推送回顾</h1>
+        <p class="head-sub" id="headSub"></p>
+      </header>
+
+      <div class="controls">
+        <div class="search-row">
+          <label class="search-box">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="searchInput" type="search" placeholder="搜标题或正文，比如「梦想」「dropout」" autocomplete="off" />
+          </label>
+        </div>
+        <div class="chips" id="chips" role="group" aria-label="按栏目筛选"></div>
+      </div>
+
+      <main id="days"></main>
+      <div class="no-results hidden" id="noResults">没有找到符合条件的推送，换个关键词或栏目试试。</div>
+
+      <footer class="page-foot" id="pageFoot"></footer>
+    </div>
+
+    <dialog class="reader" id="reader" aria-label="推送全文">
+      <div class="reader-head">
+        <div class="meta">
+          <div class="entry-top" id="readerMeta"></div>
+          <h2 id="readerTitle"></h2>
+        </div>
+        <button class="reader-close" id="readerClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="reader-body" id="readerBody"></div>
+    </dialog>
+
+    <dialog class="lightbox" id="lightbox" aria-label="卡片大图">
+      <img id="lightboxImg" alt="" />
+      <div class="lightbox-bar">
+        <a id="lightboxDl" href="#" download>下载原图</a>
+        <button id="lightboxClose">关闭</button>
+      </div>
+    </dialog>
+
+    <script>
+      "use strict";
+      var ENTRIES = [{"date": "2026-10-17", "type": "30u30", "title": "30u30 第1天｜The Unreasonable Effectiveness of Recurrent Neural Networks", "card": "", "text": "", "cardImg": ""}, {"date": "2026-10-17", "type": "夜读", "title": "背影", "card": "", "text": "", "cardImg": ""}, {"date": "2026-10-18", "type": "晨读", "title": "上午的光", "card": "morning_2026-10-18.png", "text": "", "cardImg": "morning_2026-10-18.jpg"}, {"date": "2026-10-18", "type": "30u30", "title": "30u30 第2天｜Understanding LSTM Networks", "card": "", "text": "", "cardImg": ""}, {"date": "2026-10-18", "type": "午读", "title": "What Do My Dreams Really Mean?（第4集）", "card": "noon_2026-10-18.png", "text": "", "cardImg": "noon_2026-10-18.jpg"}, {"date": "2026-10-18", "type": "夜读", "title": "麦琪的礼物（节选）", "card": "night_2026-10-18.png", "text": "", "cardImg": "night_2026-10-18.jpg"}, {"date": "2026-10-19", "type": "晨读", "title": "不要绝望于真主的慈恩", "card": "morning_2026-10-19.png", "text": "总裁，早安。今日晨读。\n\n一句话：\n\"怜悯他人者必得至仁主的怜悯，你们当怜悯地面上的生物，那么天上的主必怜悯你们。\"\n——圣训，《提尔米兹圣训集》第1924段（阿卜杜拉·本·阿慕尔传述；中文译文逐字取自圣训翻译百科全书 hadeethenc.com，该页未署个人译者名）\n\n一段话：\n我们常常把祈祷变成例行公事，匆匆念完，心却不在。可想一想：当你有求于父母、上司，或某个能左右结果的人，你会字斟句酌，挑好时机地点，恭敬恳切，不敢怠慢。那么面对你的主——那位永不疲倦、不被情绪与时间限制的至仁至慈者，你又该如何准备这场谈话？先知教导我们：祈祷贵在真诚，只向真主祈求；贵在耐心专注，不因一时未见应答就急躁；也要在小净、朝向、举手这些外在礼节里表达敬畏。你每一次真诚的呼唤，祂都不会让你空手而归。\n（据 Yaqeen Institute Roohi Tahir《How to Make Dua》一文要点精炼）\n\n一篇文章：\n今天的主读是 Yaqeen 研究所 Roohi Tahir 今年三月发表的短文《How to Make Dua: The Etiquette of Calling upon Allah》（如何祈祷：呼求真主的礼节）。文章开篇点出一个现代病：在分心成瘾的时代，我们的祈祷常常沦为打卡式的机械动作，心不在焉，还没见效就先放弃。可吊诡的是，面对世间的权威，我们反而懂得精心准备措辞、挑选时机、恭敬恳求；面对永不疲倦的真主，我们理应更用心。\n\n作者整理了先知传授的六条祈祷礼节：一，真诚，只向真主祈求，这是藏于内心、唯真主可见的功修维度，要在每件善功里用心涵养；二，耐心专注，不可急躁，把祈祷当作与深爱敬重者的专注交谈；三，注重外在状态：小净、朝向天房、举起双手、出声念出，以示敬畏；四，赞美真主并祝福先知，只求合法之事——穆斯林的祈祷要么即刻实现，要么被积攒于后世，要么被用来挡开同等的灾祸，而真主的给养远比我们所求的更多；五，抓住蒙应答的尊贵时刻：夜的后三分之一、主麻日、宣礼之后、叩头中、阿拉法日、斋戒时等等，尤其被压迫者的祈祷与真主之间毫无遮蔽；六，向众先知学习：阿丹的忏悔、努哈的坚忍、尤努斯在重重黑暗中的呼求、宰凯里雅的低语、易卜拉欣的顺从远见。\n\n结尾处作者写道：祈祷是我们与真主关系的活的表达，是我们对祂的认知、对祂智慧的托靠、对祂慈恩的确信。每一次呼求，都在打磨我们的心，校准人生的方向，把一切事务托付给那位永远在听、永远临近、永远全能的主。\n\n原文链接：https://yaqeeninstitute.org/read/blog/how-to-make-dua-the-etiquette-of-calling-upon-allah\n原作者：Roohi Tahir（Yaqeen Institute）", "cardImg": "morning_2026-10-19.jpg"}, {"date": "2026-10-19", "type": "30u30", "title": "30u30 第3天｜Recurrent Neural Network Regularization", "card": "", "text": "（注：30u30 第 1、2 天推送时尚未建档，只保留标题记录：\n第 1 天（2026-10-17）The Unreasonable Effectiveness of Recurrent Neural Networks，Andrej Karpathy，2015；\n第 2 天（2026-10-18）Understanding LSTM Networks，Christopher Olah，2015。）\n\n30u30 第3天｜Recurrent Neural Network Regularization（循环神经网络正则化）\n作者：Wojciech Zaremba、Ilya Sutskever、Oriol Vinyals，2014年\n\n一句话：这篇论文只干了一件事——找到给 LSTM 用 dropout 的正确姿势：只在层与层之间的\"纵向\"连接上用，时间轴上的\"横向\"记忆连接一个都别碰。\n\n核心思想：\n先说 dropout 是什么。训练神经网络时，dropout 会随机\"掐掉\"一部分神经元，逼网络不许依赖某几个神经元，练出更抗造的本事——有点像考试前故意遮住课本里几个关键词背书，逼自己真正理解而不是死记硬背。这招在前馈网络里大获成功，但搬到 RNN 上就翻车了，甚至有人发论文说 dropout 对循环网络根本没用。\n\n为什么翻车？LSTM 里信息走两个方向：纵向（层与层之间往上走），和横向（沿着时间一步步往前走，就是昨天说的\"记忆传送带\"）。如果你连横向也掐，等于每一步都在记忆传送带上随机戳洞——35步下来，记忆被戳了35次，LSTM 还记得住长距离的东西才怪。论文原话就是这个意思：标准 dropout 扰动了循环连接，让 LSTM 很难学会长期保存信息。\n\n生活里打个比方：小组玩\"传话记数字\"，规则是每个人复述前面所有人报过的数字。如果你每次传递时都随机涂掉几个数字（横向捣乱），最后没人记得完整串；但如果你只在\"交卷抄写\"环节偶尔涂掉几个（纵向），传送链本身干干净净，大家照样记得住，还练出了\"缺几个数字也能推出来\"的本事——这就是正则化想要的效果。\n\n论文的改动其实就一行：在 LSTM 门计算公式里，给纵向输入套上 dropout 算子 D()，横向的原样不动。输入词向量和顶层输出到 softmax 之前也加 dropout。更妙的是一个叫 L+1 的性质：一条信息从最底层走到输出，不管它在时间上存了多少步，总共只会遇到 L+1 次 dropout（L层加一次输出）。捣乱程度不随序列长度增长——序列再长也不怕，这就是它成功的关键。\n\n为什么重要：\n（1）它推翻了\"dropout 对 RNN 无效\"的结论，证明不是方法不行，是之前用错了位置。\n（2）数字非常硬：在 Penn Treebank 语言建模上，困惑度从114.5（不用正则）降到78.4（大模型加 dropout），把当时最好的107.5甩开将近30分。\n（3）它最早证明了\"正则化解锁规模\"：不用 dropout 时模型越大越过拟合、效果越差；用了之后，越大越好。规模和正则化要配着用，这条规律后来被反复验证。\n\n和现代 AI 的关系：\n（1）今天训练大模型，dropout 无处不在——Transformer 的注意力层和前馈层后面都接着 dropout，思想源头就是这篇。它是把 dropout 引入序列模型的开山之作。\n（2）2016年的变分 dropout（同一张 mask 在所有时间步复用，效果更好）就是站在它肩膀上继续改进的。\n（3）ChatGPT 这类大模型训练时，靠的正是\"大模型 + 强正则化\"的组合拳，这篇2014年的论文是最早的实证之一。\n\n代码/实现要点（仓库 implementation.py，纯 NumPy）：\n（1）dropout_forward：训练时按 keep_prob 随机生成二值 mask，输出除以 keep_prob 做放缩（叫 inverted dropout，这样推理时不用改代码）；测试时直接原样返回，绝不加 dropout。\n（2）RegularizedLSTM 类：单层 LSTM，dropout 只加在输入嵌入和输出层——正好对应论文\"纵向加、横向不加\"的原则。\n（3）仓库还额外实现了三样论文里没有、但实践中常和 dropout 搭着用的东西：层归一化、L2权重衰减、早停（验证集损失不降就停），代码里都标明了是\"我们的补充\"。\n（4）练习1就是手写 dropout 的前向和反向传播，练完这篇论文的核心就真正懂了。\n\n原论文：https://arxiv.org/abs/1409.2329\n30u30 当天页面：https://github.com/Ojhaharsh/30u30/tree/main/papers/03_RNN_Regularization", "cardImg": ""}, {"date": "2026-10-19", "type": "午读", "title": "How to See the Prophet ﷺ in a Dream（第5集）", "card": "noon_2026-10-19.png", "text": "标题：Ep.5《How to See the Prophet ﷺ in a Dream》（如何在梦中见到先知 ﷺ）\n讲者：Dr. Omar Suleiman（奥马尔·苏莱曼博士）\n视频：https://www.youtube.com/watch?v=QFrMbpwgjMw\nYaqeen 页面：https://yaqeeninstitute.org/watch/series/the-other-side-barzakh-and-beyond/how-to-see-the-prophet-in-a-dream-the-other-side\n\n精华一句：\n凡是向我致以祝安的人，安拉都会将我的灵魂归还于我，使我能够回应他的祝安。——圣训 · 《艾布·达乌德圣训集》2041（圣训翻译百科全书 hadeethenc.com/zh 官方中文版）\n\n凝练一段：\n梦见先知，是白天追随他的回声。想成为有幸在梦中见到他的人，路不在玄妙的技巧里，而在每天的功修里：多为他送祝福——每一次祝安，他都在另一端回应你；多敬畏、多行善，活得像他。梦中见他即是真见，因为那形象无人能假冒；但虔诚的标尺不在梦里，而在你醒着的每一步。今晚，就为他送上祝福吧——也许今夜，他就会来看你。\n\n完整全文翻译：\n今晚，你就能在梦中见到先知（愿主福安之）——只要你今天活得像他一样。那会是什么感觉？感受到他的温暖？感受到他的临在？看到他的微笑？那些追随先知足迹而去的、你所爱的人们，此刻是否正坐在他的身边？他们会不会正在等你——等你在今世彻底扭转人生，好让你们在那边重聚？\n\n你听说过那位加沙妇女的故事吗？她在大屠杀发生之前，就梦见了这场屠杀。就在毁灭的画面开始在各个群组里流传之前不久，她的这个梦已经在无数群组中传开了。她在梦中说：我看见先知（愿主福安之）坐在阿克萨清真寺的庭院里，来自世界各地的人们正向他聚拢而来。但他们不是普通人——他们是受压迫的穆斯林。她说：我看见了来自叙利亚的穆斯林，来自也门的穆斯林，来自伊拉克的穆斯林，来自维吾尔、克什米尔和索马里的穆斯林，他们全都来到先知（愿主福安之）身边，聚集在他周围。聚拢的人越来越多，先知（愿主福安之）看着他们，微笑着说：لَتَدْخُلُنَّ الْجَنَّةَ زُمَرًا——\"你们必将成群结队地进入乐园。\"\n\n然后他对他们说：نَصْرُ اللَّهِ آتٍ فَأَبْشِرُوا——\"真主的援助即将到来，你们当报喜。\"\n\n这时，有人对先知（愿主福安之）说：يَا رَسُولَ اللَّهِ وَمَتَى هَذَا الْفَوْزُ——\"真主的使者啊，这胜利何时到来？\"先知（愿主福安之）回答说：شَهَادَةٌ——\"殉道，才是真正的胜利。\"接着，先知（愿主福安之）开始给他们讲他自己和圣门弟子们在麦加的艰难岁月。他细数那些日子：他们遭受折磨的日子，被驱逐的日子，迁徙的日子——愿主福安之——以及先知（愿主福安之）和他的同伴们经历过的所有艰难时刻，仿佛在说：我们也曾走过。正当他讲着，一支庞大的军队出现了。她说，他们身躯魁伟，人数众多，多到数也数不清。她说，他们的面庞皎洁如满月。先知（愿主福安之）指向这支军队说：سَتُنْصَرُونَ بِهَذَا الْجَيْشِ——\"你们将借这支军队获得胜利，你们将借这支军队获得胜利。\"然后他指向他们——愿主福安之——他们便开始替穆斯林作战，直到胜利。她说，在梦的最后，我看着他说：أَنْتَ رَسُولُ اللَّهِ——\"你真的是真主的使者吗？\"先知（愿主福安之）说：أَنَا نَبِيُّكُمْ مُحَمَّدٌ——\"我是你们的先知穆罕默德——愿主福安之。我是你们的先知穆罕默德——愿主福安之。\"这些梦见先知（愿主福安之）的梦，一代又一代地支撑着这位先知的稳麦走下去，有时，也支撑着一个个具体的个人。\n\n艾奈斯·本·马立克（愿主喜悦他）说：我在麦地那服侍了先知（愿主福安之）十年，我从未见过比他更俊美、更有吉庆的人。他是万物中最优秀的，品性最高尚的。但在今世与他相伴、服侍了他十年之后，艾奈斯在先知（愿主福安之）归真后又活了九十年。你能想象他有多思念他吗？他有多渴望再次与他相聚？穆桑纳·本·赛义德传述：我听见艾奈斯（愿主喜悦他）说：والله ما من ليلة إلا وأنا أرى فيها حبيبي ﷺ——\"以真主发誓，没有一夜，我不在其中见到我的挚爱——愿主福安之。\"艾奈斯（愿主喜悦他）说这话时，常常泪流满面。\n\n就这样，他在这里服侍了他十年，又在梦中见了他九十年，凭真主——赞美他，至高无上的他——的意欲，他如今已与他相聚。每当说起这话，他便开始哭泣（愿主喜悦他）。当他活到一百多岁、终于归真时，他嘱咐人们把他从先知（愿主福安之）那里留下的所有遗物与他一同安葬，包括先知的头发和他的手杖。想象一下吧：在梦中思念了先知（愿主福安之）九十年之后，他们在拜宰赫的重逢该是何等景象。但关键在于：你不必曾与先知（愿主福安之）生活在一起，也能与他相连。怎样才能成为有幸在梦中见到他的人呢？先从最基本的说起。每当你为他（愿主福安之）送上一次祝福，先知（愿主福安之）说：«مَا مِنْ أَحَدٍ يُسَلِّمُ عَلَيَّ إِلاَّ رَدَّ اللَّهُ عَلَيَّ رُوحِي حَتَّى أَرُدَّ عَلَيْهِ السَّلاَمَ»——\"凡是向我致以祝安的人，安拉都会将我的灵魂归还于我，使我能够回应他的祝安。\"（《艾布·达乌德圣训集》2041，艾布·胡莱赖传述；中文为圣训翻译百科全书 hadeethenc.com/zh 官方中文版）\n\n在另一段传述中，先知（愿主福安之）说：你们最尊贵的日子中有主麻日，所以在这一天要多为我向真主祈求祝福，因为你们的祝福会被呈献给我。（阿拉伯原文：«إِنَّ مِنْ أَفْضَلِ أَيَّامِكُمْ يَوْمَ الْجُمُعَةِ... فَإِنَّ صَلاَتَكُمْ مَعْرُوضَةٌ عَلَيَّ»；《艾布·达乌德圣训集》1047，欧斯·本·欧斯传述）有人问：真主的使者啊，当你的身体已经腐朽、与尘土混合之后，我们的祝福又怎会被呈献给你呢？他说：«إِنَّ اللَّهَ عَزَّ وَجَلَّ حَرَّمَ عَلَى الأَرْضِ أَجْسَادَ الأَنْبِيَاءِ»——\"真主——尊贵威严的他——禁止大地吞噬众先知的身体。\"（本段圣训暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译，非圣训正文式引译。）所以，如果你此刻向他致安，他的灵魂此刻正在完好如初的身体里回应你，就像当年圣门弟子们在麦地那与他交往时一样。先知（愿主福安之）还对穆阿兹（愿主喜悦他）说：«إِنَّ أَوْلَى النَّاسِ بِي الْمُتَّقُونَ، مَنْ كَانُوا حَيْثُ كَانُوا»——离我最近的人，是最敬畏的人，无论他们是谁，无论他们身在何处。（《伊本·希班圣训集》647；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）重要的是要记住：虔诚的门槛，不是在梦中见到先知（愿主福安之），而是在日常生活中追随他。顺带一提，历史上最虔诚的一些人，一生从未在梦中见过先知（愿主福安之）；而有时，不那么虔诚的人却偏偏见到了他。但也许，那就是真主为那个人开的一剂药，引他迈出走向真主——尊贵威严的他——的下一步。\n\n无论如何，这无疑是一份厚重的恩典——因为谁见到了他（愿主福安之），谁就真正见到了他。先知（愿主福安之）说：«وَمَنْ رَآنِي فِي الْمَنَامِ فَقَدْ رَآنِي، فَإِنَّ الشَّيْطَانَ لاَ يَتَمَثَّلُ فِي صُورَتِي»——谁在梦中见我，谁就真正见了我，因为恶魔无法化作我的形象。（《布哈里圣训实录》110，艾布·胡莱赖传述；讲稿所引为该段圣训的中间节选；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译，按硬规则未列入卡片与精华一句。）这里有两点极其重要：第一，恶魔无法假冒他；第二，必须是他的真实形象，才算真正见到了他。而你见到先知（愿主福安之）的样子，也可能在向你传递不同的信息。伊玛目伊本·哈杰尔（愿主慈悯他）从艾布·杰姆拉那里传述：他说，如果你梦见先知（愿主福安之）容光焕发，那是做梦者宗教虔诚的好征兆；但如果先知（愿主福安之）身上有伤口或伤痕，那其实是做梦者自身宗教有缺欠的征兆。有一个人来找伊本·西林（愿主慈悯他）说：我梦见自己亲手埋葬了先知（愿主福安之）。伊本·西林（愿主慈悯他）把这解为：这个人陷入了异端创新——等于在埋葬圣行。另一方面，许多学者梦见自己在掘开先知（愿主福安之）的坟墓。其中就有伊玛目艾布·哈尼法（愿主慈悯他），他说：我做了一个梦，梦见自己在掘开先知（愿主福安之）的坟墓，然后开始整理他的骸骨。后来这被解为：他将整理先知（愿主福安之）的传述。所以，这其实是个好梦。\n\n努尔丁·赞吉（愿主慈悯他）——萨拉丁（愿主慈悯他）的前任——他做了一个梦见先知（愿主福安之）的梦。梦中先知（愿主福安之）面带忧色，指着两个人对努尔丁说：救我脱离这两条狗。努尔丁立刻派了两名士兵去麦地那，说：去找这两个人。他把两人的长相描述得一清二楚，士兵们果然找到了两个乔装的十字军——长相与先知（愿主福安之）在梦中描述的一模一样——他们正在地下挖掘，企图潜入先知（愿主福安之）的陵墓。伊玛目布哈里（愿主慈悯他）梦见自己在为使者（愿主福安之）驱赶苍蝇，后来这被解为：他将清除那些假冒先知（愿主福安之）之名的伪造圣训。当伊玛目艾哈迈德（愿主慈悯他）遭受酷刑时，他常梦见先知（愿主福安之）对他说：艾哈迈德啊，忍耐吧。他身边的人也常做关于他与先知（愿主福安之）同在的梦。伊玛目沙斐仪（愿主慈悯他）说：我梦见先知（愿主福安之）对我说：伊德里斯之子啊——伊本·伊德里斯啊——给这个年轻人艾哈迈德报喜吧，他很快将在真主的宗教上受到考验。他将被要求说出不该说的话。当他拒绝说出他们要他说的话时，他必将遭受鞭打。但真主必将为他传播一种知识，这种知识直到复生日都不会消失。\n\n另一位老人说：我昨天在梦中见到了先知（愿主福安之）、艾布·伯克尔和欧麦尔，他们正走过巴格达的一条运河，使者（愿主福安之）的斗篷从右肩滑落。这时，你——艾哈迈德啊——冲上前去，捡起那件斗篷，重新披回使者（愿主福安之）的肩上。于是先知（愿主福安之）转身看向你，艾布·伯克尔和欧麦尔也转身看向你，对你说：报喜吧，你明日将在乐园中与我们为伴。老人接着对艾哈迈德身边的人说：艾哈迈德披回使者（愿主福安之）肩上的那件斗篷，就是他的圣行（愿主福安之）——艾哈迈德将把圣行带回人们中间。赞美真主！先知（愿主福安之）在梦中探望你，往往就像他在今世探望你一样：他在肯定你的正道，指引你走向更好的路，或在艰难中安慰你。这直到今天仍在发生。阿菲娅·西迪基博士——可能是这个星球上受冤屈最深的女性——她提到，她梦见先知（愿主福安之）在安慰她、抚平她的痛苦，而稳麦已经把她遗忘了。还有许许多多的人，在最艰难的时刻，被赐予了这份最珍贵的礼物——一个梦。\n\n最美的梦之一，属于谢赫基什克（愿主慈悯他）。1996年12月6日，一个主麻日的清晨，他醒来后转头问儿子：先知（愿主福安之）归真时多少岁？儿子说：63岁，这你知道的。谢赫基什克（愿主慈悯他）说：一切赞颂归于真主，我也63岁了。他说：昨晚我梦见了先知（愿主福安之）、艾布·伯克尔和欧麦尔。顺带一提，他们三人归真时都是63岁。先知（愿主福安之）看着我说：向欧麦尔致安——代我向欧麦尔问安。他说：我便向欧麦尔致了安，然后我就死了。接着他说：我在这梦里又看到自己，像拉远了镜头一样——我的身体正由先知（愿主福安之）、艾布·伯克尔和欧麦尔为我洗礼。赞美真主！就在同一天，谢赫基什克（愿主福安之）在主麻日的叩头中归真了——正如他生前一直向真主祈求的那样。但那是在他用一生热爱先知（愿主福安之）、竭力把他的光延续到大地上之后。这就是关键。\n\n说到底，正如伊本·盖伊姆（愿主慈悯他）所说：这份爱，在今世确立，然后在拜宰赫确立，再到报应的家园——后世确立。人将与他所爱的人在一起，在所有这些居所里。所以，努力吧，努力吧，努力吧。如果你今世无缘得见他，真主意欲，你将在拜宰赫得他亲迎，在乐园中永远与他为伴。\n\n即使你觉得自己不配——在灵魂得以沐浴先知临在的那一刻到来之前——你可曾敢梦想，去见一见那位他与你共同崇拜的主宰？因为，如果你能在梦中见到真主最优秀的造化，那么，亲见真主本身呢？\n\n绝不然！这只是他说的一句话，在他们身后，有一道屏障，直到他们复活之日。（《古兰经》23:100 后半段）\n\n（讲者最后说：Al-Fatiha——请大家诵念开端章。）\n\n引文核对说明：转录来源为 Yaqeen 官网官方 WP 接口（https://cdn.yaqeeninstitute.org/wp-json/wp/v2/posts/33118，acf.transcript_content，WEBVTT 全文，AI 生成，时长 13:02）+ 该集页面 References 脚注核对引文。圣训阿拉伯原文经 sunnah.com 逐字核对。圣训中文仅艾布·达乌德 2041 采用圣训翻译百科全书（hadeethenc.com/zh）官方中文版；其余三条暂无可核对的权威中文译文，正文为讲稿英文的忠实翻译并已标注。古兰经 23:100 阿拉伯原文取自 api.quran.com text_uthmani，讲者仅引用后半段。", "cardImg": "noon_2026-10-19.jpg"}, {"date": "2026-10-19", "type": "夜读", "title": "秋天的怀念", "card": "night_2026-10-19.png", "text": "总裁，夜安。今晚夜读。\n\n夜读 · 史铁生《秋天的怀念》\n\n双腿瘫痪以后，我的脾气变得暴躁无常，望着天上北归的雁阵，我会突然把面前的玻璃砸碎；听着录音机里甜美的歌声，我会猛地把手边的东西摔向四周的墙壁。母亲这时就悄悄地躲出去，在我看不见的地方偷偷地听着我的动静。当一切恢复沉寂，她又悄悄地进来，眼圈红红的，看着我。\"听说北海的花儿都开了，我推着你去走走。\"她总是这么说。母亲喜欢花，可自从我瘫痪以后，她侍弄的那些花都死了。\"不，我不去！\"我狠命地捶打这两条可恨的腿，喊着，\"我活着有什么意思！\"母亲扑过来抓住我的手，忍住哭，说：\"咱娘儿俩在一块儿，好好儿活……\"\n\n可我一直都不知道，她的病已经到了那步田地。后来妹妹告诉我，母亲常常肝疼得整宿整宿翻来覆去睡不了觉。\n\n那天我又独自坐在屋里，看着窗外的树叶\"刷刷拉拉\"地飘落。母亲进来了，挡在窗前，\"北海的菊花开了，我推着你去看看吧。\"她憔悴的脸上现出央求的神色。\"什么时候？\"\"你要是愿意，就明天？\"她说。我的回答已经让她喜出望外了。\"好吧，就明天。\"我说。她高兴得一会儿坐下，一会儿站起。\"那就赶紧准备准备。\"\"哎呀，烦不烦！几步路，有什么好准备的！\"她也笑了，坐在我身边，絮絮叨叨地说着：\"看完菊花，咱们就去'仿膳'，你小时候最爱吃那儿的豌豆黄儿。还记得那回我带你去北海吗？你偏说那杨树花是毛毛虫，跑着一脚踩扁一个……\"她忽然不说了。对于\"跑\"和\"踩\"一类的字眼儿，她比我还敏感。她又悄悄地出去了。\n\n她出去后，就再也没回来。邻居们把她抬上车时，她还在大口大口地吐着鲜血。我没想到她已经病成那样。看着三轮车远去，也绝没有想到竟是永远永远的诀别。\n\n邻居的小伙子背着我去看她的时候，她正艰难地呼吸着。别人告诉我，她昏迷前的最后一句话是：\"我那个有病的儿子和我那个未成年的女儿……\"\n\n又是秋天，妹妹推我去北海看了菊花。黄色的花淡雅，白色的花高洁，紫红色的花热烈而深沉，泼泼洒洒，秋风中正开得烂漫。我懂得母亲没有说完的话。妹妹也懂。我俩在一块儿，要好好儿活……\n\n——史铁生《秋天的怀念》（1981年作；统编版语文七年级上册第5课课文，人民教育出版社）\n\n---", "cardImg": "night_2026-10-19.jpg"}, {"date": "2026-10-20", "type": "晨读", "title": "起不来晨礼？试试这个办法", "card": "morning_2026-10-20.png", "text": "总裁，早安。今日晨读。\n\n一句话：\n\"凡培养自己的性灵者，必定成功；凡戕害自己的性灵者，必定失败。\"\n——《古兰经》91:9-10 · 马坚译\n\n一段话：\n天地的创造，昼夜的轮流，在有理智的人看来，此中确有许多迹象。他们站着，坐着，躺着记念真主，并思维天地的创造，（他们说）：我们的主啊！你没有徒然地创造这个世界。我们赞颂你超绝万物，求你保护我们，免受火狱的刑罚。\n——《古兰经》3:190-191 · 马坚译\n\n一篇文章：\n今天的文章来自澳大利亚谢赫 Belal Assaad 的官方 YouTube 频道，题目很实在：《如果你总在晨礼时起不来，不妨试试这个办法》。\n\n谢赫先讲了一位兄弟的真实经历。这位兄弟常年苦恼自己起不来做晨礼，后来想出一个\"狠招\"：他把手机闹铃录成了自己的声音。闹钟一响，响起的不是音乐，而是他自己一遍遍的喊话：\"起来！想象你此刻就躺在坟墓里，你拿什么去见真主？别浪费时间了，起来，你这个懒人！\"语气又急又不留情面，他每次都被自己的声音\"骂\"醒，不出十秒就彻底清醒了。\n\n谢赫由此点出关键：与自己的私欲角力，本身就是信仰的样子。很多人以为，礼拜时若心里不情愿、提不起劲，这拜功就不算数了——恰恰相反。他说，你的里面仿佛住着两个人：一个想赖在床上，一个把你往床下拽。它们每一次交锋，你都在做选择：往哪个方向走？\n\n晨起的那一刻，就是一天中第一次角力。挣扎本身不是软弱的证据，而是被引导的起点。正如真主所说：\"为我而奋斗的人，我必定指引他们我的道路。\"（《古兰经》29:69，马坚译）\n\n原作者：Belal Assaad（澳大利亚谢赫）\n原文链接：https://www.youtube.com/watch?v=t06FbNpz9xo\n---", "cardImg": "morning_2026-10-20.jpg"}, {"date": "2026-10-20", "type": "30u30", "title": "30u30 第4天｜Keeping Neural Networks Simple by Minimizing the Description Length of the Weights", "card": "", "text": "30u30 第4天｜Keeping Neural Networks Simple by Minimizing the Description Length of the Weights（把神经网络变简单：最小化权重的描述长度）\n作者：Geoffrey Hinton、Drew van Camp，1993 年，发表于 COLT 1993（计算学习理论年会）。Hinton 就是后来拿诺贝尔物理学奖的那位。\n\n一句话：这篇只有 6 页的纯理论论文证明了\"最小描述长度\"和\"变分贝叶斯\"其实是同一回事——把每个权重从固定数值变成一个带噪声的分布，让网络被迫变简单、泛化更好。这是贝叶斯深度学习的奠基性工作之一。\n\n核心思想，换个生活里的比方讲：\n想象你要把训练好的网络\"寄\"给朋友，权重是信里的清单。普通网络每个权重记成 5.123456 这种精确小数，相当于每张清单都要写满九位数字，又费纸又啰嗦。Hinton 说：别记精确数了，记成\"大概是 5.1，前后浮动 0.2\"就行——也就是权重不再是一个数，而是一个分布。如果你抖一下这个权重（加一点噪声）网络照样工作，说明你根本不需要那九位小数，省下来的精度就等于省下来的信纸。而\"比特归还（bits back）\"是论文最妙的一笔：如果收发两方共用随机数发生器，采样用的随机性本身能传递信息，抵消掉一部分描述成本。算到最后，每个权重的描述成本恰好等于 KL 散度：KL(q||p)。于是训练目标变成：数据误差 + 权重复杂度的 tug-of-war，复杂就得多付 KL 的账。\n\n为什么重要：第一，它把信息论的\"最小描述长度\"和贝叶斯统计的\"变分推断\"焊在了一起，这个等式 KL + 误差 后来成了整个贝叶斯深度学习的训练范式。第二，它最早讲清了\"平坦最小值\"的道理：权重自带噪声，网络就不能站在损失曲面又窄又尖的山顶上——稍微一抖误差就爆炸；只能退到宽阔平坦的山谷里，训练和测试之间的小扰动才翻不起浪。第三，这是 1993 年的事，比 VAE（2014）、Bayes by Backprop（2015）早了二十多年；同期 MacKay（1992）用拉普拉斯近似走了另一条路，一起奠定了贝叶斯深度学习的地基。论文只有一个小回归玩具实验证明想法可行，没有 MNIST、没有 benchmark——它是纲领，不是擂台成绩。\n\n和现代 AI 的关系：今天大模型训练里到处都能看到它的影子。VAE 的 ELBO 目标函数就是论文里这个公式；Dropout 被证明（Gal & Ghahramani 2016）本质上是在做近似变分推断；现代的权重剪枝、模型压缩（比如 LLM 量化）背后都是\"权重能省多少精度\"的 MDL 直觉。至于实用派会说：真正的贝叶斯神经网络因为每个权重存均值和方差两套参数、每次前向传播都不一样，太慢了——所以 30u30 的实现用重参数化 trick（Kingma 2014 的方法，不是论文里的）才让它能实际训练。\n\n代码/实现要点（仓库 implementation.py，纯 NumPy）：\n1. BayesianLinear 层：每个权重存两套参数——均值 mu 和 rho（sigma = softplus(rho)，保证标准差为正），初始化 rho = -3，开始时权重只带一点点不确定性。\n2. 每次 forward 都重新采样：w = mu + sigma * epsilon，epsilon 是标准正态噪声。所以同一个输入跑两次结果不一样，这就是不确定性本身。\n3. 损失 = MSE + beta * KL，KL 有闭式公式 0.5*sum(sigma^2 + mu^2 - 1 - log(sigma^2))。beta 最关键（0.001 到 1.0）：太大模型直接躺平预测直线，太小又退化成普通网络、不确定性消失。\n4. 预测时跑 100 次取均值和标准差：在有数据的地方预测紧、在缺数据的地方发散——仓库的缺口正弦波实验把这个可视化得很好，标准网络在没见过的数据上敢自信地胡说，贝叶斯网络会诚实地说\"我不知道\"。\n\n原论文：https://www.cs.toronto.edu/~hinton/absps/colt93.pdf\n30u30 当天页面：https://github.com/Ojhaharsh/30u30/tree/main/papers/04_Minimizing_Description_Length\n---", "cardImg": ""}, {"date": "2026-10-20", "type": "午读", "title": "Is Allah Speaking to You?（第6集）", "card": "noon_2026-10-20.png", "text": "标题：Ep.6《Is Allah Speaking to You?》（真主在对你说话吗？）\n讲者：Dr. Omar Suleiman（奥马尔·苏莱曼博士）\n视频：https://www.youtube.com/watch?v=fRVNp0AYoPA\nYaqeen 页面：https://yaqeeninstitute.org/watch/series/the-other-side-barzakh-and-beyond/can-you-see-allah-in-a-dream-the-other-side\n\n精华一句：\n每当你诵读《古兰经》，他就在对你说话；每当你礼拜，他就在回应你。\n\n凝练一段：\n你不必见到真主，就能和他说话：每天的拜功里，你诵念开端章，他逐句回应你；每一次诵读《古兰经》，都是他在对你说话；每一次祈祷，都是你在对他说话。有些人谈论真主，却从不和真主说话；有些人知道关于真主的事，却不认识真主。从\"难道我不是你们的主吗\"到坟墓中的\"谁是你的主\"，这一生就是你认识他的时间。今晚带着小净入睡吧——让你的灵魂今夜就在他的宝座前叩头。\n\n完整全文翻译：\n你见过真主吗？如果没有见过，你多久能和他说一次话？\n\n每天，我们睁开眼睛，映入眼帘的是周遭的世界：造化的壮美、我们所爱之人的面庞、那些我们有时遗忘的恩典。视觉是一种强大的感官。人们说，眼见为实，对吧？可你见过真主吗？如果你从未见过他，又该如何亲近他？\n\n艾布·耶济德·比斯塔米说：\"我在梦中见到了我的主。我说：'雅·拉布，凯法·塔里古·伊莱克（Ya Rabb, kaifa tariqo ilayk）？——我的主啊，我如何才能亲近你？'我的主回答说：'乌特鲁克·奈夫塞克·沃·塔阿勒（Utruk nafsak wa ta'al）——抛下你自己，走近些。'\"（伊本·焦兹《纯洁者的特质》）\n\n伊玛目艾哈迈德（愿主慈悯他）也说：\"我在梦中见到了我的主。我说：我的主啊，寻求亲近你的人，该如何亲近你？他回答：'雅·艾哈迈德·比·凯拉米（Ya Ahmad bi kalami）——艾哈迈德啊，凭我的言辞。'\"指的是诵读《古兰经》。\"我说：我的主啊，是带着理解诵读，还是不带理解诵读？\"真主——尊贵威严的他——回答：带着理解或不带理解都行。意思是：《古兰经》是吉庆的，带着经注和理解来诵读当然更好，但仅仅是诵念真主的言辞本身，就是亲近他的最佳方式之一。（伊本·焦兹《忠告集》）\n\n伊本·焦兹（愿主慈悯他）还提到，叶海亚·本·巴卡（愿主慈悯他）在梦中见到了他的主，他说：\"雅·拉布，凯姆·艾德乌凯·沃·拉·图吉布尼（Ya Rabb, kam ad'uuka wa la tujeebunee）？——我的主啊，我向你祈求了多久，你却没有应答我？\"真主回应他说：\"雅·叶海亚，印尼·乌希布·安·艾斯麦阿·扫特克（Ya Yahya inni uhibbu an asma'a sawtak）——叶海亚啊，我喜爱听到你的声音。\"\n\n先知（愿主福安之）说，伊赫桑（ihsan，至善）就是：你以能看见真主的方式崇拜他；如果你看不见他，那就知道他看见你。（《布哈里圣训实录》50；《穆斯林圣训实录》8；阿拉伯原文 «أَنْ تَعْبُدَ اللَّهَ كَأَنَّكَ تَرَاهُ، فَإِنْ لَمْ تَكُنْ تَرَاهُ فَإِنَّهُ يَرَاكَ» 经 sunnah.com 核对；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）\n\n可这在实践中到底意味着什么？先知（愿主福安之）在一则传述里做了展开。穆阿兹（愿主喜悦他）说：我去见先知（愿主福安之），说：\"雅·拉苏鲁拉，奥斯尼（Ya Rasulullah, awsini）——真主的使者啊，请给我忠告。\"先知（愿主福安之）说：\"我劝你：以你能看见真主的方式崇拜他，把自己算作已死之人，在每块石头、每棵树旁记念真主。如果你犯了一件罪，就用一件善功来替补它：隐秘的罪用隐秘的善功替补，公开的罪用公开的善功替补。\"（伊本·艾比·谢拜《穆桑纳夫》；伊本·罕百里《苦修书》；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）\n\n请你想一想：以能看见真主的方式崇拜他，和把自己算作已死之人，这两者之间有什么关联？其中的智慧之一是：你开始如实地看清现实。而没有什么比真主——赞美他，至高无上的他——本身更真实。\n\n先知（愿主福安之）和先贤们传下过一些梦境，他们在梦中说：我见到了真主。我们知道这些人都是诚实可信的人。据记载，伊玛目艾布·哈尼法（愿主慈悯他）多次有过这样的经历。所以，这是一个确立的现象。但在梦中见到真主是罕见的——是灵魂独一无二的体验，是心的视见，真实却远不及在后世真正亲见真主——那才是我们所有人渴望的真正恩赐。这是真主——赞美他，至高无上的他——赐给少数虔诚先贤的礼物，我们不该对此过度执着。\n\n那为什么还要提起呢？因为如果你留意，就会发现：即使在那为数不多的梦境里，重点依然是——你要通过《古兰经》中他的言辞、通过你祈祷（du'a）中的言辞，与真主相连。这就是关键。你不必在这里见到真主——你每天本来就已经在直接地、多次地与真主打交道。有些人谈论真主，却不和真主——赞美他，至高无上的他——说话；有些人知道关于真主的事，却不认识真主。而懂得灵魂的这种直接交接，足以深刻地改变人生。当然，任何感受到与真主——赞美他，至高无上的他——这种直接联系的人，都会想要更多。\n\n这就是为什么穆萨（愿主赐他平安）想在今世见到他，却未能如愿。但真主以什么尊荣了他？真主仍然尊荣他为凯利穆拉（Kaleemullah）——真主直接与之对话的人。\n\nوَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ——\"如果我的仆人询问我的情状，你就告诉他们：我确是临近的。\"（《古兰经》2:186 前半段）\n\n在你来到这个世界之前，真主曾直接对你说话：أَلَسْتُ بِرَبِّكُمْ——\"难道我不是你们的主吗？\"（《古兰经》7:172 节选）\n\n下一次，你将在坟墓中被问到：من ربك（man rabbuk）——\"谁是你的主？\"在这两个问题之间，你有整整一生的时间去认识他。你准备好回答了吗？\n\n理论上讲，一个信士一生中与真主说话的次数，本该超过与任何人的交谈——光算拜功（salah）就够了。每一次你礼拜、诵念开端章，真主都在直接回应你。就算你一天连一次圣行拜都不做，你每天也至少有十七次与真主直接对话。这还不算拜功中的其他部分，也不算你白天所做的那些祈祷。\n\n拜功是信士的登霄。正如真主带着先知（愿主福安之）的身与魂踏上通往他的旅程、直接为他规定了拜功一样，真主也赐给了你拜功——你的灵魂借此升向他，直接与他对话。先知（愿主福安之）说：仆人离真主最近的时刻，是在叩头（sujood）中。（《穆斯林圣训实录》482；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）\n\n我记得曾问过一位刚皈依伊斯兰的兄弟：对你来说，伊斯兰最美的地方是什么？他说：兄弟，真主太容易接近了。我从不知道，能直接和真主说话会是这样一种感觉。\n\n先知（愿主福安之）怎么说？真主说：«إِنَّ اللَّهَ عَزَّ وَجَلَّ يَقُولُ أَنَا مَعَ عَبْدِي إِذَا هُوَ ذَكَرَنِي وَتَحَرَّكَتْ بِي شَفَتَاهُ»——\"真主——尊贵威严的他——说：我与我的仆人在一起，只要他记念我、双唇因诵念我的名号而翕动。\"（《伊本·马哲圣训集》3792，艾布·胡莱赖传述；阿拉伯原文经 sunnah.com 核对；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）你记念真主，真主必记念你。\n\n你的灵魂时时刻刻都在渴慕他，即使在你睡着的时候。伊玛目拜哈基（愿主慈悯他）提到一段归于艾布·达尔达（愿主喜悦他）的传述，另有一段几乎一字不差的话归于阿卜杜拉·本·阿慕尔（愿主喜悦他）：信士的灵魂在睡眠时被带到真主的宝座前；如果他是带着塔哈拉（tahara，洁净）的状态入睡的，他的灵魂就被允许向真主叩头。（拜哈基《信仰之枝》）\n\n赞美真主！我们知道圣行是睡前做小净，如果我们这样做，天使们整夜都会为我们祈祷。（《布哈里圣训实录》247；《穆斯林圣训实录》2710）所以，即使在睡梦中，你也被带近了。如果你在睡前做的最后一件事是善功——带着小净入睡——那么你的灵魂将以这种状态度过整夜。\n\n而灵魂渴慕他——赞美他，至高无上的他——的程度，决定了你从进入拜宰赫（barzakh）的那一刻起，多快、多深地与他相遇。\n\n已经有人见到真主了吗？再说一次，没有什么能比得上后世的亲见。贾比尔（愿主喜悦他）传下过一则优美的传述：我父亲在吴侯德殉难后，先知（愿主福安之）来见我，说：\"雅·贾比尔，马·利·阿拉卡·蒙凯西兰（Ya Jabir, ma li araka munkasiran）？——贾比尔啊，我怎么看你愁容满面？\"我说：\"真主的使者啊，我父亲殉难了——他在吴侯德那天阵亡，留下了一大家子要养，还有一身债务。\"先知（愿主福安之）对他说：\"要不要我告诉你一件让你宽心的事？马·凯莱麦拉胡·艾哈丹·盖特·伊拉·敏·沃拉伊·希贾布（Ma kallamAllahu ahadan qat illa min warai hijab）——真主从未对任何人说过话，除非隔着帷幕。沃·凯莱麦拉胡·阿巴克·基法汉（Wa kallamAllahu abaka kifahan）——但真主直接对你父亲说了话。他说：'雅·阿卜迪，塔曼纳·阿莱亚·乌阿提克（Ya abdi tamanna alayya u'teek）——我的仆人啊，向我祈求吧，我必赐给你。'你父亲说：'雅·拉布，图赫伊尼·法·乌格塔鲁·菲克·萨尼延（Ya Rabb, tuhyini fa uqtalu feeka thaniyan）——我的主啊，让我复活吧，好让我再一次为你殉道。'真主说：'印奈胡·萨巴盖·敏尼·安奈胡姆·伊莱哈·拉·亚尔吉乌恩（Innahu sabaqa minni annahum ilayha la yarji'oon）——我已经前定：他们不会再回到那个世界。'你父亲说：'雅·拉布，法·艾布里格·曼·沃拉伊（Ya Rabb, fa abligh man warai）——我的主啊，那就把这个消息传达给我身后的人吧。'\"（《铁密济圣训集》3010；《伊本·马哲圣训集》190；阿拉伯原文经 sunnah.com 核对；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）\n\n就在那时，真主——赞美他，至高无上的他——降示了关于烈士的经文：他们是艾哈亚（ahya），是活着的；真主——赞美他，至高无上的他——确在照料他们。（《古兰经》3:169）\n\n想想吧：在经历了那样美妙的一刻之后，他唯一的愿望就是回来，再一次为真主献出生命。想象这份渴望，再想想加沙、也门以及整个穆斯林世界的烈士们——他们如今亲历真主的亲近，不只渴望见到他，更渴望一而再、再而三地为他奋斗、为他牺牲。\n\n还记得伊玛目艾哈迈德（愿主慈悯他）吗？他在受酷刑时，常梦见先知（愿主福安之）。他去世后，他的一位学生说：\"我在梦中见到了伊玛目艾哈迈德，我问他：'雅·阿巴·阿卜杜拉（Ya Aba Abdillah）——阿卜杜拉之父啊，你的主怎样对待你了？'伊玛目艾哈迈德回答：'他饶恕了我。他对我说：雅·艾哈迈德，你为我挨了六十鞭。我说：是的，我的主。他说：现在，我的脸为你显现，你想看多久就看多久。'\"（巴格达迪《巴格达史》）\n\n赞美真主！你看，在看不见他时为真主做出的苦涩牺牲，和在那边见到他时的甘甜之间，有着多么直接的联系。\n\n也许还要过一段时间，你才能直接见到他——赞美他，至高无上的他。我们知道，终极的亲见是为乐园保留的。但在此期间，你能看到他的迹象。当你死去，又一重迹象向你显现，为你揭开你与他之间的又一层面纱。我们死时，信士看到的是慈悯的天使，不信者看到的是惩罚的天使，而烈士从受难的第一击起就直接看到了乐园。\n\n但如果你是信士，那时你将拥有属于你自己的\"夜行登霄\"。正如伊玛目达哈克（愿主慈悯他）所传：当信士仆人的灵魂被取走，它被升上诸天，与真主最亲近者陪伴着它。他们说：\"雅·拉布，阿卜杜凯·富兰（Ya Rabb, abduka fulan）——我的主啊，这是你的仆人某某。\"尽管真主比他们更了解他。然后真主——赞美他，至高无上的他——降下一份封印的证书，保证他免于真主的刑罚。\n\n接着他说，这就是真主这句话的含义：كَلَّا إِنَّ كِتَابَ الْأَبْرَارِ لَفِي عِلِّيِّينَ ۝ وَمَا أَدْرَاكَ مَا عِلِّيُّونَ ۝ كِتَابٌ مَرْقُومٌ ۝ يَشْهَدُهُ الْمُقَرَّبُونَ——\"真的，善人们的记录，确在善行簿中。你怎能知道善行簿是什么？是一本封存的簿子，真主所亲近的天神们将作证它。\"（《古兰经》83:18-21 · 马坚译；阿拉伯原文取自 api.quran.com text_uthmani）\n\n问题是：你现在能透过他的迹象和经文看到真主吗？这对你产生了什么影响？还是说，你要等到宇宙把你吞噬殆尽，等到看清一切时却已无力行动？如果你渴望在那一天亲眼见到他的这份恩赐，你可曾意识到，真主已经在今世给了你直达他的通道？\n\n你要在那边等着见他，还是要在今世磨利你的眼光，继续寻求与他的亲近？لَقَدْ كُنتَ فِي غَفْلَةٍ مِّنْ هَٰذَا فَكَشَفْنَا عَنكَ غِطَاءَكَ فَبَصَرُكَ الْيَوْمَ حَدِيدٌ——\"你确忽视此事，现在我已揭开你的蒙蔽，所以你今日的眼光是锐利的。\"（《古兰经》50:22 · 马坚译；阿拉伯原文取自 api.quran.com text_uthmani）可那时，你已经死了。你，又何曾真正活过？\n\n引文核对说明：转录来源为 Yaqeen 官网官方 WP 接口（https://cdn.yaqeeninstitute.org/wp-json/wp/v2/posts/33176，acf.transcript_content，WEBVTT 全文，AI 生成）+ 该集页面 References 脚注核对引文。古兰经阿拉伯原文取自 api.quran.com text_uthmani，中文为马坚译（2:186、7:172 为讲者引用的节选，已标注；83:18-21、50:22 为完整引用）。圣训阿拉伯原文经 sunnah.com 逐字核对（布哈里 50、伊本·马哲 3792、铁密济 3010）；本集圣训暂无可核对的权威中文译文，正文圣训部分为讲稿英文的忠实翻译并已逐条标注，未列入卡片与精华一句。\n", "cardImg": "noon_2026-10-20.jpg"}, {"date": "2026-10-19", "type": "古兰经学习", "title": "古兰经学习｜开端章 + 黄牛章 1-10（已学完）", "card": "", "text": "总裁，这是您已经学完的古兰经英语学习第一课（2026-10-19 学完），三语对照全文存档如下。音频与三色 PDF 当天已随推送发送。\n\n【开端章 Al-Fatiha（1:1-7）】\n1:1\nبِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ\nIn the name of Allāh, the Entirely Merciful, the Especially Merciful.\n奉至仁至慈的真主之名\n1:2\nٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ\n[All] praise is [due] to Allāh, Lord of the worlds -\n一切赞颂全归真主，众世界 的主，\n1:3\nٱلرَّحْمَـٰنِ ٱلرَّحِيمِ\nThe Entirely Merciful, the Especially Merciful,\n至仁至慈的主，\n1:4\nمَـٰلِكِ يَوْمِ ٱلدِّينِ\nSovereign of the Day of Recompense.\n报应日的主，\n1:5\nإِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ\nIt is You we worship and You we ask for help.\n我们只崇拜你，只求你祐助\n1:6\nٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ\nGuide us to the straight path -\n求你引领我们正路，\n1:7\nصِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ\nThe path of those upon whom You have bestowed favor, not of those who have earned [Your] anger or of those who are astray.\n你所祐助者的路，不是受谴怒者的路，也不是迷误者的路。\n\n【黄牛章 Al-Baqarah（2:1-10）】\n2:1\n الٓمٓ\nAlif, Lām, Meem.\n艾列弗，俩目，米目。\n2:2\nذَٰلِكَ ٱلْكِتَـٰبُ لَا رَيْبَ ۛ فِيهِ ۛ هُدًى لِّلْمُتَّقِينَ\nThis is the Book about which there is no doubt, a guidance for those conscious of Allāh -\n这部经，其中毫无可疑，是敬畏者的向导。\n2:3\nٱلَّذِينَ يُؤْمِنُونَ بِٱلْغَيْبِ وَيُقِيمُونَ ٱلصَّلَوٰةَ وَمِمَّا رَزَقْنَـٰهُمْ يُنفِقُونَ\nWho believe in the unseen, establish prayer, and spend out of what We have provided for them,\n他们确信幽玄，谨守拜功，并分舍我所给与他们的。\n2:4\nوَٱلَّذِينَ يُؤْمِنُونَ بِمَآ أُنزِلَ إِلَيْكَ وَمَآ أُنزِلَ مِن قَبْلِكَ وَبِٱلْـَٔاخِرَةِ هُمْ يُوقِنُونَ\nAnd who believe in what has been revealed to you, [O Muḥammad], and what was revealed before you, and of the Hereafter they are certain [in faith].\n他们确信降示你的经典，和在你以前降示的经典，并且笃信後世。\n2:5\nأُو۟لَـٰٓئِكَ عَلَىٰ هُدًى مِّن رَّبِّهِمْ ۖ وَأُو۟لَـٰٓئِكَ هُمُ ٱلْمُفْلِحُونَ\nThose are upon [right] guidance from their Lord, and it is those who are the successful.\n这等人，是遵守他们的主的正道的；这等人，确是成功的。\n2:6\nإِنَّ ٱلَّذِينَ كَفَرُوا۟ سَوَآءٌ عَلَيْهِمْ ءَأَنذَرْتَهُمْ أَمْ لَمْ تُنذِرْهُمْ لَا يُؤْمِنُونَ\nIndeed, those who disbelieve - it is all the same for them whether you warn them or do not warn them - they will not believe.\n不信道者，你对他们加以警告与否，这在他们是一样的，他们毕竟不信道。\n2:7\nخَتَمَ ٱللَّهُ عَلَىٰ قُلُوبِهِمْ وَعَلَىٰ سَمْعِهِمْ ۖ وَعَلَىٰٓ أَبْصَـٰرِهِمْ غِشَـٰوَةٌ ۖ وَلَهُمْ عَذَابٌ عَظِيمٌ\nAllāh has set a seal upon their hearts and upon their hearing, and over their vision is a veil. And for them is a great punishment.\n真主已封闭他们的心和耳，他们的眼上有翳膜；他们将受重大的刑罚。\n2:8\nوَمِنَ ٱلنَّاسِ مَن يَقُولُ ءَامَنَّا بِٱللَّهِ وَبِٱلْيَوْمِ ٱلْـَٔاخِرِ وَمَا هُم بِمُؤْمِنِينَ\nAnd of the people are some who say, \"We believe in Allāh and the Last Day,\" but they are not believers.\n有些人说：我们已信真主和末日了。其实，他们绝不是信士。\n2:9\nيُخَـٰدِعُونَ ٱللَّهَ وَٱلَّذِينَ ءَامَنُوا۟ وَمَا يَخْدَعُونَ إِلَّآ أَنفُسَهُمْ وَمَا يَشْعُرُونَ\nThey [think to] deceive Allāh and those who believe, but they deceive not except themselves and perceive [it] not.\n他们想欺瞒真主和信士，其实，他们只是自欺，却不觉悟。\n2:10\nفِى قُلُوبِهِم مَّرَضٌ فَزَادَهُمُ ٱللَّهُ مَرَضًا ۖ وَلَهُمْ عَذَابٌ أَلِيمٌۢ بِمَا كَانُوا۟ يَكْذِبُونَ\nIn their hearts is disease, so Allāh has increased their disease; and for them is a painful punishment because they [habitually] used to lie.\n他们的心里有病，故真主增加他们的心病；他们将为说谎而遭受重大的刑罚。", "cardImg": "", "audio": [{"src": "quran_al-fatihah_1-7.mp3", "label": "开端章 1-7"}, {"src": "quran_al-baqarah_1-10.mp3", "label": "黄牛章 1-10"}]}, {"date": "2026-10-20", "type": "古兰经学习", "title": "古兰经学习｜黄牛章 11-20", "card": "", "text": "课名：黄牛章 11-20（上一节 1-10 用户回复\"学完了\"，自动推进）\n音频：english-quran/al-baqarah_11-20.mp3（每节先阿语诵读 Mishary Alafasy，再英语翻译 Ibrahim Walk）\n文档：english-quran/al-baqarah_11-20.pdf（三语对照：阿拉伯原文 · Saheeh International 英译 · 马坚中译）\n\n三语对照全文：\n\n【2:11】\n阿拉伯原文：وَإِذَا قِيلَ لَهُمْ لَا تُفْسِدُوا۟ فِى ٱلْأَرْضِ قَالُوٓا۟ إِنَّمَا نَحْنُ مُصْلِحُونَ\n英译（Saheeh International）：And when it is said to them, \"Do not cause corruption on the earth,\" they say, \"We are but reformers.\"\n中译（马坚）：有人对他们说：你们不要在地方上作恶。他们就说：我们只是调解的人。\n\n【2:12】\n阿拉伯原文：أَلَآ إِنَّهُمْ هُمُ ٱلْمُفْسِدُونَ وَلَـٰكِن لَّا يَشْعُرُونَ\n英译（Saheeh International）：Unquestionably, it is they who are the corrupters, but they perceive [it] not.\n中译（马坚）：真的，他们确是作恶者，但他们不觉悟。\n\n【2:13】\n阿拉伯原文：وَإِذَا قِيلَ لَهُمْ ءَامِنُوا۟ كَمَآ ءَامَنَ ٱلنَّاسُ قَالُوٓا۟ أَنُؤْمِنُ كَمَآ ءَامَنَ ٱلسُّفَهَآءُ ۗ أَلَآ إِنَّهُمْ هُمُ ٱلسُّفَهَآءُ وَلَـٰكِن لَّا يَعْلَمُونَ\n英译（Saheeh International）：And when it is said to them, \"Believe as the people have believed,\" they say, \"Should we believe as the foolish have believed?\" Unquestionably, it is they who are the foolish, but they know [it] not.\n中译（马坚）：有人对他们说：你们应当象众人那样信道。他们就说：我们能象愚人那样轻信吗？真的，他们确是愚人，但他们不知道。\n\n【2:14】\n阿拉伯原文：وَإِذَا لَقُوا۟ ٱلَّذِينَ ءَامَنُوا۟ قَالُوٓا۟ ءَامَنَّا وَإِذَا خَلَوْا۟ إِلَىٰ شَيَـٰطِينِهِمْ قَالُوٓا۟ إِنَّا مَعَكُمْ إِنَّمَا نَحْنُ مُسْتَهْزِءُونَ\n英译（Saheeh International）：And when they meet those who believe, they say, \"We believe\"; but when they are alone with their evil ones, they say, \"Indeed, we are with you; we were only mockers.\"\n中译（马坚）：他们遇见信士们就说：我们已信道了。他们回去见了自己的恶魔，就说：我们确是你们的同党，我们不过是愚弄他们罢了。\n\n【2:15】\n阿拉伯原文：ٱللَّهُ يَسْتَهْزِئُ بِهِمْ وَيَمُدُّهُمْ فِى طُغْيَـٰنِهِمْ يَعْمَهُونَ\n英译（Saheeh International）：[But] Allāh mocks them and prolongs them in their transgression [while] they wander blindly.\n中译（马坚）：真主将用他们的愚弄还报他们，将任随他们彷徨於悖逆之中。\n\n【2:16】\n阿拉伯原文：أُو۟لَـٰٓئِكَ ٱلَّذِينَ ٱشْتَرَوُا۟ ٱلضَّلَـٰلَةَ بِٱلْهُدَىٰ فَمَا رَبِحَت تِّجَـٰرَتُهُمْ وَمَا كَانُوا۟ مُهْتَدِينَ\n英译（Saheeh International）：Those are the ones who have purchased error [in exchange] for guidance, so their transaction has brought no profit, nor were they guided.\n中译（马坚）：这等人，以正道换取迷误，所以他们的交易并未获利，他们不是遵循正道的。\n\n【2:17】\n阿拉伯原文：مَثَلُهُمْ كَمَثَلِ ٱلَّذِى ٱسْتَوْقَدَ نَارًا فَلَمَّآ أَضَآءَتْ مَا حَوْلَهُۥ ذَهَبَ ٱللَّهُ بِنُورِهِمْ وَتَرَكَهُمْ فِى ظُلُمَـٰتٍ لَّا يُبْصِرُونَ\n英译（Saheeh International）：Their example is that of one who kindled a fire, but when it illuminated what was around him, Allāh took away their light and left them in darkness [so] they could not see.\n中译（马坚）：他们譬如燃火的人，当火光照亮了他们的四周的时候，真主把他们的火光拿去，让他们在重重的黑暗中，甚麽也看不见。\n\n【2:18】\n阿拉伯原文：صُمٌّۢ بُكْمٌ عُمْىٌ فَهُمْ لَا يَرْجِعُونَ\n英译（Saheeh International）：Deaf, dumb and blind - so they will not return [to the right path].\n中译（马坚）：（他们）是聋的，是哑的，是瞎的，所以他们执迷不悟。\n\n【2:19】\n阿拉伯原文：أَوْ كَصَيِّبٍ مِّنَ ٱلسَّمَآءِ فِيهِ ظُلُمَـٰتٌ وَرَعْدٌ وَبَرْقٌ يَجْعَلُونَ أَصَـٰبِعَهُمْ فِىٓ ءَاذَانِهِم مِّنَ ٱلصَّوَٰعِقِ حَذَرَ ٱلْمَوْتِ ۚ وَٱللَّهُ مُحِيطٌۢ بِٱلْكَـٰفِرِينَ\n英译（Saheeh International）：Or [it is] like a rainstorm from the sky within which is darkness, thunder and lightning. They put their fingers in their ears against the thunderclaps in dread of death. But Allāh is encompassing of the disbelievers.\n中译（马坚）：或者如遭遇倾盆大雨者，雨里有重重黑暗，又有雷和电，他们恐怕震死，故用手指塞住耳朵，以避疾雷。真主是周知不信道的人们的。\n\n【2:20】\n阿拉伯原文：يَكَادُ ٱلْبَرْقُ يَخْطَفُ أَبْصَـٰرَهُمْ ۖ كُلَّمَآ أَضَآءَ لَهُم مَّشَوْا۟ فِيهِ وَإِذَآ أَظْلَمَ عَلَيْهِمْ قَامُوا۟ ۚ وَلَوْ شَآءَ ٱللَّهُ لَذَهَبَ بِسَمْعِهِمْ وَأَبْصَـٰرِهِمْ ۚ إِنَّ ٱللَّهَ عَلَىٰ كُلِّ شَىْءٍ قَدِيرٌ\n英译（Saheeh International）：The lightning almost snatches away their sight. Every time it lights [the way] for them, they walk therein; but when darkness comes over them, they stand [still]. And if Allāh had willed, He could have taken away their hearing and their sight. Indeed, Allāh is over all things competent.\n中译（马坚）：电光几乎夺了他们的视觉，每逢电光为他们而照耀的时候，他们在电光中前进；黑暗的时候，他们就站住。假如真主意欲，他必褫夺他们的听觉和视觉。真主对於万事确是全能的。", "cardImg": "", "audio": [{"src": "quran_al-baqarah_11-20.mp3", "label": "黄牛章 11-20"}]}, {"date": "2026-10-20", "type": "夜读", "title": "《给予》（Giving）——泰国 True Move H 公益短片", "card": "night_2026-10-20.png", "text": "总裁，夜安。今晚夜读。\n\n夜读 · 真实故事：泰国公益短片《给予》（Giving）\n\n这是2013年泰国电信公司 True Move H 推出的一支三分钟公益短片。没有明星，没有大场面，讲的却是一个关于善意如何流转的故事。它上线后在全球被转发了上千万次，被无数人称为\"史上最催泪的公益广告\"。\n\n清晨的街角，一家药店门口传来呵斥声。一个瘦小的男孩被药店老板揪住衣领，手里攥着几包还没付钱的止痛药。\"小偷！\"老板骂得很凶，街坊们纷纷围了过来。\n\n男孩吓得浑身发抖，眼泪在眼眶里打转。他低声说：\"对不起……这是给我妈妈买的药，她病了，家里没有钱。\"\n\n就在这时，隔壁卖汤面的小店老板走了过来。他没有责怪孩子，也没有说教，只是默默掏出钱，替男孩付了药钱。他又转身对自己的女儿说：\"去，给孩子装一份蔬菜汤，让他带回去给妈妈。\"\n\n女儿装好热腾腾的一袋汤，递到男孩手里。男孩抱着药和汤，一步三回头地消失在街口。\n\n镜头一转，三十年后。\n\n汤面店老板老了，女儿也长大了，父女俩还守着那家小店。老板一辈子都是这样的人：街坊缺米少面，他顺手就帮了；看到挨饿的人经过，他总多盛一勺汤。善良，是他三十年如一日的生活方式。\n\n一天，老板在店里突然倒下，头部重重磕在桌角上，送进医院抢救，昏迷不醒。女儿衣不解带地守在病床前，可巨额的医药费很快压了下来——79万2千泰铢，约合2万多美元。她咬咬牙，准备把经营了半辈子的店铺卖掉，来换父亲活下去的机会。\n\n有一天清晨，她在父亲的病床前醒来，发现枕边放着一张新的费用单。她颤抖着打开，几乎不敢看数字——医药费总计：0泰铢。\n\n单据下方还有一行手写的英文：\n\n\"All expenses paid 30 years ago with three packs of painkillers and a bag of veggie soup.\"\n\n（三包止痛药，一袋蔬菜汤——这笔费用，早在三十年前就已经付清了。）\n\n落款是主治医生的名字。女儿抬头看向病房门口：那位医生，正是三十年前在药店门口偷药的男孩。他长大了，成了这家医院的医生，多年来一直在默默帮助有需要的人。而这一次，他回报的，是当年那份改变了他命运的善意。\n\n影片结尾，只有一句话：\n\nGiving is the best communication.\n给予，是最好的沟通。\n\n三十年前的一份善意，三十年后以另一种方式回来。人性之善，从来都不会真正消失，它只是换了一种样子，继续往前走。那位汤面店老板大概从没想过，自己随手的一次帮助，会在三十年后救了自己一命——善良从不求回报，但它从不会缺席。\n\n愿今晚的你，也被这份善意温暖。晚安。\n\n——泰国 True Move H 公益短片《给予》（Giving，2013年，三分钟）；故事梗概按影片内容复述，账单原文为影片画面英文、中文为直译；影片曾获 socialpsychology.org 2013 Day of Compassion 引文收录，mediapost（2013-09-19）、marketing-interactive（2013-09）等多家媒体报道\n\n\n---", "cardImg": "night_2026-10-20.jpg"}, {"date": "2026-10-21", "type": "晨读", "title": "心安之处", "card": "morning_2026-10-21.png", "text": "总裁，早安。今日晨读。\n\n一句话：\n\"他们信道，他们的心境因记忆真主而安静，真的，一切心境因记忆真主而安静。\"\n——《古兰经》13:28 · 马坚译\n\n一段话：\n艾布·穆萨传述：先知（愿主福安之）说：\"记念主宰的人，与不记念主宰的人，就如同活人与死人。\"（《布哈里正确圣训集》6407，布哈里、穆斯林共同辑录）圣训翻译百科全书释义：记念真主之人的心是活的，外在有生命之光，内在有认知的光明充盈，还能把益处带给周围的人；而不记念的人，心如死去，外在空虚无华，内在虚妄空洞，毫无益处可言。记念，是心灵的生命，正如灵魂是身体的生命。\n\n一篇文章：\n今天的文章来自美国伊玛目 Suhaib Webb 的官网，一份《记念与反思指南》（January Dhikr & Reflection Guide）。它的开篇只有一句话：Begin the year gently. Start with remembrance.——温柔地开始，从记念开始。\n\n这份指南的立意很特别：一月不必是压力、决心和\"做更多\"的代名词。它邀请人慢下来，重新连接，以记念真主、端正举意为根基，开启新的一程。指南里没有宏大的计划，只有简单而有意义的日常功课：每天的记念提示、校准举意的简短反思题、温和而不僵硬的节奏，以及留白——停下来、反思、与真主重新连接的空间。\n\n它的设计哲学是\"持续，而非完美\"：这套方法可以配合你已有的生活节奏，无论你是刚刚起步，还是正在重建坚持记念的习惯。它最后写道：This is not about starting fast. It's about starting sincere.——重要的不是起步快，而是起步真诚。\n\n清晨，正是\"温柔开始\"的时刻。新的一天，不必先立下宏大决心；先记念，心就安了。正如今天的经文所说：一切心境因记忆真主而安静。\n\n原作者：Suhaib Webb（美国伊玛目）\n原文链接：https://suhaibwebb.com/january-dhikr", "cardImg": "morning_2026-10-21.jpg"}, {"date": "2026-10-21", "type": "30u30", "title": "30u30 第5天｜A Tutorial Introduction to the Minimum Description Length Principle（最小描述长度原理导引）", "card": "", "text": "30u30 第5天｜A Tutorial Introduction to the Minimum Description Length Principle（最小描述长度原理导引）——Peter Grünwald，2004年\n\n一句话：这是一篇约80页的教程式综述，把\"最小描述长度\"（MDL）这套选模型的思想从头到尾讲了一遍——选模型就是选\"编码方案\"，能把数据压缩得最短的那个模型就是最好的模型。\n\n核心思想：想象你要把一份实验数据发给远方的朋友。有两种寄法：直接把原始数据一个个数抄过去；或者先讲规律，再说例外——比如\"这些点大致沿着一条三次曲线走，只有3个点偏了0.2\"。第二种寄法要付两份\"邮费\"：讲规律的钱（模型描述长度L(H)，参数越多越贵），再加上讲例外的钱（残差描述长度L(D|H)，拟合越差越贵）。太简单的模型，规律没讲清楚，例外一大堆；太复杂的模型，规律讲得比数据还啰嗦——比如100个数据点用99次多项式去拟合，光是写下100多个参数就比直接寄原始数据还贵了。最佳模型是两份邮费加起来最便宜的那个。妙处在于：没有任何人为设置的调参旋钮，平衡点是自动出现的。论文还讲了三个升级版：两步编码（最直白）、预序编码（不讲模型，直接看模型预测新数据的\"惊讶程度\"累计）、NML归一化极大似然（理论上的黄金标准，分母算\"这个模型族能拟合多少种数据\"，越灵活的模型族分摊下来每个数据集分得的概率越低、编码越贵）。\n\n为什么重要：这是奥卡姆剃刀的数学实现。Day4的Hinton & van Camp用MDL的思想去压缩神经网络权重，今天这篇讲的是它底下的数学地基。它还给出了和AIC、BIC两个经典准则的精细对比：AIC惩罚项固定（每个参数2分），数据量大时会系统性选复杂模型；BIC按log n惩罚，在指数族里和MDL很接近；而MDL最灵的一点是惩罚会\"看菜下碟\"——一个几乎为零的参数花的比特数，远少于一个远离零的参数。作者本人也很谨慎：MDL不假设数据真是某个\"真实模型\"生成的，只管压缩；他也提醒，别把\"压缩好\"直接等同于\"真理解\"，模型族选错了，压缩再好也白搭。\n\n和现代AI的关系：这篇论文的例子停留在多项式、马尔可夫模型层面，几乎没碰神经网络（作者明说深学习不是它的地盘），但它的精神活在大模型时代的每个角落：权重衰减、稀疏正则化、剪枝、LoRA、量化压缩，背后都是同一个直觉——用更短的描述学到真正的规律；大模型参数效率的研究（比如Chinchilla的规模律）在追问的也是\"同样的智能最少需要多少参数\"。可以这么说：Day4讲的是把这套思想装进神经网络，今天讲的是这套思想本身的说明书。\n\n代码要点：仓库把理论变成了可跑的实验（纯NumPy+SciPy）：\n1. two_part_mdl_polynomial：两步编码选多项式次数，模型比特数=(次数+1)×32，残差比特数用高斯公式(n/2)·log2(2πeσ²)；\n2. prequential_mdl_polynomial：按顺序逐个预测新点，累计\"-log预测概率\"作为编码长度，连模型描述都不需要写；\n3. nml_complexity_polynomial：按(k/2)·log(n/2π)估算模型族的随机复杂度；\n4. PolynomialMDL类封装了\"拟合—打分—选次数\"完整流程；跑python train_minimal.py，真实次数为3的带噪数据，MDL准确挑出3次，次数再高省下的残差比特抵不过新增参数的代价；\n5. compare_mdl_aic_bic和Monte Carlo蒙特卡洛对比（后者是仓库作者的自加料）把三个准则正面打一架。\n5道练习覆盖三步编码/预序编码/NML/准则对比，答案在solutions.py。\n\n原论文：https://arxiv.org/abs/math/0406077\n当天页面：https://github.com/Ojhaharsh/30u30/tree/main/papers/05_MDL_Principle\n\nMDL的发明者是Rissanen，Grünwald后来还把这篇讲义扩成了MIT出版社的专著《The Minimum Description Length Principle》（2007）。", "cardImg": ""}, {"date": "2026-10-21", "type": "午读", "title": "How Many Lives Do You Really Have?（第7集）", "card": "noon_2026-10-21.png", "text": "标题：Ep.7《How Many Lives Do You Really Have?》（你到底有几条命？）\n讲者：Dr. Omar Suleiman（奥马尔·苏莱曼博士）\n视频：https://www.youtube.com/watch?v=Dh8a8-UOEv0\nYaqeen 页面：https://yaqeeninstitute.org/watch/series/the-other-side-barzakh-and-beyond/how-many-lives-do-you-really-have-the-other-side\n\n精华一句：\n一个人可能活到八十岁才去世，但他的灵魂也许只有八天大——因为每一次挣扎、每一次回归真主，都在剥去旧我的一层外壳。\n\n凝练一段：\n这一集讲\"重生\"。讲者说，身体的死亡只发生一次，心灵却可以死去又重生无数次：伊布利斯因违抗被列入死者，欧麦尔却死而复生、带着光明行走人间。正如真主能使枯死的大地复活，也能让死去的心一次次活过来——小净与拜功、朝觐与迁徙、患难中的感恩，都是灵魂的\"再出生\"。但你要记住：肉体死亡的那一刻，灵魂重生的机会就永远结束了。\n\n完整全文翻译：\n照镜子的时候，你看到的或许是一个活生生的人。但在另一面，你会不会其实只是一具行尸走肉？你是真的活着，还是只是在等你的身体追上那颗已经死去的灵魂？你喂养身体让它活下去，可你是不是一直在让灵魂挨饿、饿到死去？你亲手杀死过自己的心多少次？而你又能让它起死回生多少次？\n\n伊玛目伊本·盖伊姆传述：真主曾启示穆萨（愿主赐他平安）说：\"穆萨啊，在我的造化之中，第一个真正死去的是伊布利斯——因为他违抗了我，而违抗我的人，我都把他算在死者之列。\"（伊本·盖伊姆《疾病与良药》）\n\n而欧麦尔（愿主喜悦他）恰恰相反——他被形容为一个死而复生的人。真主说：\nأَوَمَن كَانَ مَيْتًا فَأَحْيَيْنَاهُ وَجَعَلْنَا لَهُ نُورًا يَمْشِي بِهِ فِي النَّاسِ\n\"一个人，原是死的，但我使他复活，并给他一道光明，带著在人间行走。\"（《古兰经》6:122（节选）· 马坚译）\n\n请你想象一下：如果看到欧麦尔（愿主喜悦他）前半生的样子——酗酒、伤害身边的人，甚至密谋要杀害先知（愿主福安之）；再看到他后来成为哈里发的样子——那根本不是同一个人。\n\n在\"铁\"章中，真主说：\nأَلَمْ يَأْنِ لِلَّذِينَ آمَنُوا أَن تَخْشَعَ قُلُوبُهُمْ لِذِكْرِ اللَّهِ\n\"难道信士们以为时间还未到，故他们的心不为真主的教诲和他所降示的真理而柔和吗？\"（《古兰经》57:16（节选）· 马坚译）\n紧接着，真主又说：\nاعْلَمُوا أَنَّ اللَّهَ يُحْيِي الْأَرْضَ بَعْدَ مَوْتِهَا\n\"你们应当知道真主是使已死的大地复活的。\"（《古兰经》57:17（节选）· 马坚译）\n这就是一个迹象：无论你的心、你的灵魂死去了多少回，都还有机会被一次次带回生命。\n\n但问题是：你现在是活着，还是已经死了？这完全取决于你灵魂的状态。先贤们常说：比身体的死亡更可怕的，是心的死亡。\n\n先知（愿主福安之）说，诗人说过的最真诚的诗句是：\nأَلَا كُلُّ شَيْءٍ مَا خَلَا اللَّهَ بَاطِلُ\n\"除真主之外的一切，都是虚妄、可抛弃的。\"（《布哈里圣训实录》3841；《穆斯林圣训实录》2256；阿拉伯原文经 sunnah.com 核对；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）\n你的身体一旦与真主——赞美他，至高无上的他——断了连接，也在\"可抛弃\"之列。\n\n从身体上看，你的生命要经历许多阶段：先是众灵之境——前世之境，那时你只是一个灵魂；然后是今世的生命——身体与灵魂相合，你成了一个自我；再往后是坟墓的间隔期——灵魂继续前行，但仍以某种方式与身体相连，而身体在朽坏；最后是后世——真主——赞美他，至高无上的他——让雨从天而降，先知（愿主福安之）说，雨水落在尾骨上，一具新的身体便破土而出，与灵魂重新相合；这灵魂与身体，将带着永恒的结局活下去。\n\n这是身体。但你的灵魂和身体不一样——它可以一次次地重生、一次次地被带回生命。\n\n这为什么如此重要？因为一个人可能活到八十岁才去世，但就灵魂而言，他也许只有八天大——因为每一次挣扎、每一次回归真主，都在剥去旧我的一层外壳，剩下的，是一个崭新、被更新了的信士。\n\n赞美真主！我记得我们社区里有一位七十五岁的老人，他逢人便说自己只有四岁——因为他把归信作证的那一天当作自己的生日。\n\n但这不意味着他的重生是轻松的。当你成为穆斯林，你就脱去了旧生活的襁褓般的舒适：你曾消费的一切、你曾交往的人，更重要的是——你曾是的那个人。每一次重生都伴随着某种牺牲或不适，但随后而来的，是崭新的生命。\n\n请你留意先知（愿主福安之）提到的所有圣训——他告诉我们，人可以通过哪些方式回到\"母亲生下他的那一天\"的状态。\n\n首先，乌格白·本·阿米尔传述的圣训：先知（愿主福安之）说：\"只要有一个穆斯林，把小净做得完美，然后站起来礼拜，并且清楚自己在念什么，他走出这次拜功时，就会像他母亲生下他的那一天一样。\"（《达里米圣训集》；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）\n就像婴儿带着羊水来到这个世界，你带着小净的灵性之水走出拜功；婴儿出生时听到的第一件事是宣礼，而你——每一次小净、每一次拜功，都是在重演自己出生的循环。\n\n想一想：灵魂来到这个世界时是没有罪的。先知（愿主福安之）说，小净和拜功洗去我们的罪，就像生命之河洗去一切；残留在我们身上的，都会在鞠躬和叩头中抖落，就像抖落肩背上的沙子一样。（《伊本·希班圣训集》1734；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）\n\n然后是小净与拜功的\"加强版\"：步行去清真寺、等完一番拜再等下一番、在艰难的情况下做小净。这里有一段先知（愿主福安之）讲述的、他自己的梦境——可以说是最不可思议的传述之一。\n\n穆阿兹（愿主喜悦他）说：有一次，先知（愿主福安之）来上晨礼迟到了，眼看太阳就要升起，我们在清真寺里等着；然后他匆匆出来，宣了内宣礼，先知（愿主福安之）带领礼拜，并缩短了拜功。礼完拜，先知（愿主福安之）转过身来，用洪亮的声音对我们说：kama antum——\"保持你们的队形，不要动。\"然后他说：\"我要告诉你们今天早上我为什么迟到。昨夜我起来做夜间拜，做了小净，礼了我所能礼的拜——那是真主——赞美他，至高无上的他——为我规定的。然后我困了，就睡着了。他说：然后我看见真主——赞美他，至高无上的他——以最美好的形象显现，对我说：'呀·穆罕默德！'我说：'我的主啊，我来了（rabbi labbayk）。'他说：'你知道最高议会——众天使——此刻在争论什么吗？'我说：'我的主啊，我不知道（la adri ya rab）。'他又问了一遍，我还是这样回答；一共问了三遍。然后他说：他把手放在我的双肩之间，我感到一股清凉直透胸口，一切都向我显明了，我知道了答案。他又说：'呀·穆罕默德！'我答：'我的主啊，我来了。'他问：'他们在争论什么？'我说：'他们在争论，哪些善功能彻底罚赎罪过——这是众天使在天上的议题。'于是真主问我：'那是哪些呢？'我说：'步行去参加集体拜，礼完拜后坐在清真寺里等下一番拜，以及在艰难的情况下把小净做完美。谁能坚持这些，他将美好地活着、美好地死去，他的罪过将被涤净，如同他母亲生下他的那一天。'\"（《铁密济圣训集》3234；阿拉伯原文经 sunnah.com 核对；本段中文为讲稿英文的忠实翻译。该圣训另有可核对的权威中文译文：hadeethenc.com/zh/browse/hadith/6332，穆阿兹·本·贾巴尔传述，[健全的圣训]，铁尔米兹、艾哈迈德传述。）\n\n你看，肉体的出生有挣扎、有痛苦、有等待：母亲怀胎九月才分娩；灵魂也一样，怀揣着罪，直到把它交付给真主的饶恕——那一刻，灵魂重新出生。\n\n那么，做礼拜最尊贵的地方是哪里？是麦加。正因如此，先知（愿主福安之）说：\"谁来这座天房朝觐，远离房事、远离罪恶、远离争吵，他走出朝觐时，就会像他母亲生下他的那一天一样纯洁。\"（《布哈里圣训实录》1820；阿拉伯原文经 sunnah.com 核对；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）\n\n赞美真主！请你想一想：朝觐的每一个环节都在复刻你的出生。你站在阿拉法特——那正是你的灵魂来此之前所在的地方，你在那里与真主重立盟约；然后你前往穆兹达利法——众灵的停留之地；然后你来到人间，用石头击打恶魔——还记得你出生时恶魔戳了你一下吗？这一次，在灵魂的重生里，轮到你用石头击打恶魔了；然后你献上乌德希耶——你的牺牲——还记得你出生时献的是阿给格吗？这一次，献祭的是你自己；然后你把真主——赞美他，至高无上的他——放在生命的中心去环游，在奔走中把一切事务托付于他；到某个时刻你脱下戒衣——它多像你死时的寿衣；最后你与信士们一同庆祝——正如信士们在乐园中的庆祝。赞美真主！短短几天，就是生与死的一次完整预演。如果做得对，你的灵魂将彻底重生。\n\n今世的朝觐是灵魂的重生，因为它象征着后世的旅程。但重生不只发生在麦加的朝觐里，也发生在别的旅程中——包括另一个此刻离我们心很近的特殊地方：阿克萨清真寺。\n\n先知（愿主福安之）说，当苏莱曼（愿主赐他平安）建完远寺，他向真主祈求了三件事：他求真主赐他与真主的判断相合的判断力；他求真主赐他前无古人、后无来者的王权；他求真主：任何人来到这座清真寺，只为在这里礼拜，他走出时便罪孽全消，如同他母亲生下他的那一天。先知（愿主福安之）说：前两个祈求已被应允，我希望第三个也被应允了。（《伊本·马哲圣训集》1408；阿拉伯原文经 sunnah.com 核对；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）\n\n再往下是迁徙——为真主——赞美他，至高无上的他——而迁往他乡。在迁徙中，你是真真正正地在一片新土地上、为真主开始新生活——于是真主把你的罪留在了你离开的地方。\n\n最后，还有一种经常发生的事：在患难中感恩。这是舍达德·本·奥斯（愿主喜悦他）的圣训，他说：我听先知（愿主福安之）说，真主说：\"当我考验我的一个信士仆人，他因我的考验而赞美我，那么在那一天，他起身时将如同他母亲生下他的那一天一样，脱离罪恶。\"（《穆斯奈德·艾哈迈德》；阿拉伯原文经 sunnah.com 转引 Mishkat 1579 核对；暂无可核对的权威中文译文，此处中文为讲稿英文的忠实翻译。）\n这是因为罪会随着考验从你身上抖落——尤其当你在考验中赞美真主——赞美他，至高无上的他。考验越大，抖落的罪越多，加到你天秤上的回赐也越多。\n\n最后，把这些圣训总结起来，请你想一想伊玛目安萨里（愿主慈悯他）说过的一句话。他说：重生与死亡到底是什么？不过是从一种状态转移到另一种状态。你归信伊斯兰、你去朝觐、你迁徙——都是从一种状态转移到另一种状态。正如真主说：\nيَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَجِيبُوا لِلَّهِ وَلِلرَّسُولِ إِذَا دَعَاكُمْ لِمَا يُحْيِيكُمْ\n\"信道的人们啊！当使者号召你们去遵循那使你们获得生命的（教训）的时候，你们当响应真主和使者。\"（《古兰经》8:24（节选）· 马坚译）\n\n你活着的每一天，都是重新塑造自己、复活心中的那颗心、甚至获得重生的机会。但当肉体死亡的那一刻到来、当你真正\"重生\"的那一刻，灵魂重生的机会就正式结束了。因为这一次，你将彻底脱下身体的躯壳、告别这个世界；你的死亡，将是你下一站的新生命——而那新生命的样子，取决于你在这一站过着怎样的人生。\n\n核对说明：转录稿取自 Yaqeen 官网 WP 接口（https://cdn.yaqeeninstitute.org/wp-json/wp/v2/posts/33216 的 acf.transcript_content，WEBVTT 全文，AI 生成），为第 1 优先级来源；本集 References 共 15 条，已用于核对全部引文。古兰经阿拉伯原文取自 api.quran.com text_uthmani，中文为马坚译（节选处已标注\"（节选）\"）。圣训阿拉伯原文经 sunnah.com 逐条核对（布哈里 3841、穆斯林 2256、布哈里 1820、铁密济 3234、伊本·马哲 1408、布哈里 4418、穆斯奈德·艾哈迈德舍达德传述）；其中铁密济 3234（穆阿兹梦境圣训）另有可核对的权威中文译文 hadeethenc.com/zh/browse/hadith/6332（[健全的圣训]，铁尔米兹、艾哈迈德传述），其余圣训暂无可核对的权威中文译文，正文为讲稿英文的忠实翻译并已逐条标注，未入卡片与精华一句。卡片引文为《古兰经》57:17（节选）· 马坚译。", "cardImg": "noon_2026-10-21.jpg"}, {"date": "2026-10-21", "type": "夜读", "title": "《小王子》第二十一章（节选）——狐狸与驯服", "card": "night_2026-10-21.png", "text": "《小王子》第二十一章（节选）——狐狸与驯服\n\n总裁，晚上好。今晚的夜读，想带您重温一个写了八十多年、依然温暖的故事。\n\n《小王子》是法国作家安托万·德·圣埃克絮佩里1943年出版的作品：一个来自小小星球的孩子，在宇宙间旅行，最后来到地球，遇见了一只狐狸。下面这段节选自第二十一章，译文是马振聘先生的经典译本（人民文学出版社《小王子》）。\n\n小王子在草地上遇见狐狸，狐狸请他\"驯服\"自己。小王子问，驯服是什么意思？狐狸说：\n\n\"对我来说，你还只是一个小男孩，就像其他千万个小男孩一样。我不需要你。你也同样用不着我。对你来说，我也只不过是一只狐狸，和其他千万只狐狸一样。但是，如果你驯服了我，我们就互相不可缺少了。对我来说，你就是世界上唯一的了；我对你来说，也是世界上唯一的了。\"\n\n狐狸又教小王子，该怎样驯服它：\n\n\"应当非常耐心。开始你就这样坐在草丛中，坐得离我稍微远些。我用眼角瞅着你，你什么也不要说。说话是误会的根源。但是，每天，你得坐得靠我更近些……\"\n\n\"最好还是在原来的那个时间来。比如说，你下午四点钟来，那么从三点钟开始，我就开始感到幸福。时间越临近，我就越感到幸福。到了四点钟的时候，我就会坐立不安；我就会发现幸福的代价。\"\n\n狐狸还说，被驯服之后，连世界都会变得不一样：\n\n\"我的生活很单调。我捕捉鸡，而人又捕捉我。所有的鸡全都一样，所有的人也全都一样。因此，我感到有些厌烦了。但是，如果你要是驯服了我，我的生活就一定会是欢快的。我会辨认出一种与众不同的脚步声。其他的脚步声会使我躲到地下去，而你的脚步声就会象音乐一样让我从洞里走出来。再说，你看！你看到那边的麦田没有？我不吃面包，麦子对我来说，一点用也没有。我对麦田无动于衷。而这，真使人扫兴。但是，你有着金黄色的头发。那么，一旦你驯服了我，这就会十分美妙。麦子，是金黄色的，它就会使我想起你。而且，我甚至会喜欢那风吹麦浪的声音……\"\n\n于是小王子驯服了狐狸。离别的时候到了。临走前，狐狸让小王子再去看看园子里的五千朵玫瑰。小王子对她们说：\n\n\"你们很美，但你们是空虚的。没有人能为你们去死。当然罗，我的那朵玫瑰花，一个普通的过路人以为她和你们一样。可是，她单独一朵就比你们全体更重要，因为她是我浇灌的。因为她是我放在花罩中的。因为她是我用屏风保护起来的。因为她身上的毛虫（除了留下两三只为了变蝴蝶而外）是我除灭的。因为我倾听过她的怨艾和自诩，甚至有时我聆听着她的沉默。因为她是我的玫瑰。\"\n\n小王子回到狐狸身边告别。\n\n\"再见了。\"小王子说道。\n\n\"再见。\"狐狸说，\"喏，这就是我的秘密。很简单：只有用心才能看得清。实质性的东西，用眼睛是看不见的。\"\n\n\"实质性的东西，用眼睛是看不见的。\"小王子重复着这句话，以便能把它记在心间。\n\n\"正因为你为你的玫瑰花费了时间，这才使你的玫瑰变得如此重要。\"\n\n\"正因为你为你的玫瑰花费了时间……\"小王子又重复着，要使自己记住这些。\n\n\"人们已经忘记了这个道理，\"狐狸说，\"可是，你不应该忘记它。你现在要对你驯服过的一切负责到底。你要对你的玫瑰负责……\"\n\n\"我要对我的玫瑰负责……\"小王子又重复着。\n\n——安托万·德·圣埃克絮佩里《小王子》第二十一章（节选），马振聘 译，人民文学出版社\n\n爱不是占有，是花费时间，是负起责任。今夜，愿您也想起那朵属于自己的\"玫瑰\"。晚安，总裁。", "cardImg": "night_2026-10-21.jpg"}];
+
+      var TYPE_META = {
+        "晨读": { cls: "morning", time: "06:00" },
+        "30u30": { cls: "paper", time: "10:00" },
+        "午读": { cls: "noon", time: "12:00" },
+        "夜读": { cls: "night", time: "19:00" },
+        "古兰经学习": { cls: "english", time: "17:30" }
+      };
+      var TYPE_ORDER = ["晨读", "30u30", "午读", "古兰经学习", "夜读"];
+      var WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+      function esc(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+      function weekdayOf(dateStr) {
+        var p = dateStr.split("-");
+        return WEEKDAYS[new Date(+p[0], +p[1] - 1, +p[2]).getDay()];
+      }
+      function prettyDate(dateStr) {
+        var p = dateStr.split("-");
+        return (+p[1]) + "月" + (+p[2]) + "日";
+      }
+      function previewOf(text) {
+        if (!text) return "";
+        var t = text.replace(/\s+/g, " ").trim();
+        return t.length > 110 ? t.slice(0, 110) + "…" : t;
+      }
+      function hasArabic(s) { return /[\u0600-\u06FF]/.test(s); }
+      function renderText(text) {
+        return text.split(/\n{2,}/).map(function (block) {
+          var lines = block.split("\n").map(function (ln) {
+            var safe = esc(ln).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+            return safe;
+          }).join("<br>");
+          var rtl = hasArabic(block) && !/[\u4e00-\u9fff]/.test(block);
+          return '<p' + (rtl ? ' dir="rtl" lang="ar"' : "") + ">" + lines + "</p>";
+        }).join("");
+      }
+
+      /* ---------- header summary ---------- */
+      var dates = ENTRIES.map(function (e) { return e.date; }).sort();
+      var withText = ENTRIES.filter(function (e) { return e.text; }).length;
+      var withCard = ENTRIES.filter(function (e) { return e.card; }).length;
+      var withAudio = ENTRIES.filter(function (e) { return e.audio && e.audio.length; }).length;
+      document.getElementById("headSub").innerHTML =
+        "每天四次推送——晨读、30u30 论文、午读、夜读——外加古兰经学习，都在这里存着。" +
+        "共 <b>" + ENTRIES.length + "</b> 条，" + prettyDate(dates[0]) + " 至 " + prettyDate(dates[dates.length - 1]) +
+        "，其中 <b>" + withText + "</b> 条有全文、<b>" + withCard + "</b> 条有卡片、<b>" + withAudio + "</b> 条带音频。点开任意一条即可回看。";
+      document.getElementById("pageFoot").textContent =
+        "存档自 " + dates[0] + " 起；10月17、18日的早期推送建档时只留了标题（30u30 第1、2天已并入第3天的说明），全文自 10月19日起完整保存。卡片随推送附带，30u30 栏目本身不带卡片。";
+
+      /* ---------- filter chips ---------- */
+      var state = { type: "全部", q: "" };
+      var chipsEl = document.getElementById("chips");
+      var counts = { "全部": ENTRIES.length };
+      TYPE_ORDER.forEach(function (t) { counts[t] = 0; });
+      ENTRIES.forEach(function (e) { counts[e.type]++; });
+      ["全部"].concat(TYPE_ORDER).forEach(function (t) {
+        var b = document.createElement("button");
+        b.className = "chip";
+        b.type = "button";
+        b.setAttribute("aria-pressed", t === "全部" ? "true" : "false");
+        b.innerHTML = esc(t) + '<span class="n">' + counts[t] + "</span>";
+        b.addEventListener("click", function () {
+          state.type = t;
+          chipsEl.querySelectorAll(".chip").forEach(function (c) { c.setAttribute("aria-pressed", "false"); });
+          b.setAttribute("aria-pressed", "true");
+          applyFilter();
+        });
+        chipsEl.appendChild(b);
+      });
+
+      /* ---------- render days ---------- */
+      var daysEl = document.getElementById("days");
+      var byDate = {};
+      ENTRIES.forEach(function (e) { (byDate[e.date] = byDate[e.date] || []).push(e); });
+      Object.keys(byDate).sort().reverse().forEach(function (date) {
+        var sec = document.createElement("section");
+        sec.className = "day";
+        sec.dataset.date = date;
+        var list = byDate[date].slice().sort(function (a, b) {
+          return TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type);
+        });
+        var head = document.createElement("div");
+        head.className = "day-head";
+        head.innerHTML =
+          '<span class="d">' + prettyDate(date) + '</span>' +
+          '<span class="w">' + date + " · " + weekdayOf(date) + '</span>' +
+          '<span class="rule"></span>' +
+          '<span class="c day-count">' + list.length + " 条</span>";
+        sec.appendChild(head);
+
+        var grid = document.createElement("div");
+        grid.className = "entries";
+        list.forEach(function (e) { grid.appendChild(entryCard(e)); });
+        sec.appendChild(grid);
+        daysEl.appendChild(sec);
+      });
+
+      function tagHtml(e) {
+        var m = TYPE_META[e.type];
+        return '<span class="tag ' + m.cls + '">' + esc(e.type) + '</span><span class="time">' + m.time + "</span>";
+      }
+
+      function entryCard(e) {
+        var art = document.createElement("article");
+        art.className = "entry";
+        art.dataset.type = e.type;
+        art.dataset.search = (e.title + "\n" + (e.text || "")).toLowerCase();
+
+        var top = document.createElement("div");
+        top.className = "entry-top";
+        top.innerHTML = tagHtml(e) +
+          (e.text ? '<span class="has-full">全文 ' + e.text.length + " 字</span>" : "");
+        art.appendChild(top);
+
+        var h = document.createElement("h2");
+        h.textContent = e.title;
+        art.appendChild(h);
+
+        if (e.text) {
+          var p = document.createElement("p");
+          p.className = "preview";
+          p.textContent = previewOf(e.text);
+          art.appendChild(p);
+        } else if (!e.card) {
+          var n = document.createElement("p");
+          n.className = "empty-note";
+          n.textContent = "本条建档时仅保留了标题。";
+          art.appendChild(n);
+        }
+
+        var foot = document.createElement("div");
+        foot.className = "entry-foot";
+        if (e.text) {
+          var rb = document.createElement("button");
+          rb.className = "btn primary";
+          rb.type = "button";
+          rb.textContent = "读全文";
+          rb.addEventListener("click", function () { openReader(e); });
+          foot.appendChild(rb);
+        }
+        if (e.audio && e.audio.length) {
+          var ab = document.createElement("button");
+          ab.className = "btn";
+          ab.type = "button";
+          ab.textContent = "听音频";
+          ab.addEventListener("click", function () { openReader(e); });
+          foot.appendChild(ab);
+        }
+        if (e.card) {
+          var vb = document.createElement("button");
+          vb.className = "btn";
+          vb.type = "button";
+          vb.textContent = "看卡片";
+          vb.addEventListener("click", function () { openLightbox(e); });
+          foot.appendChild(vb);
+        }
+        if (foot.children.length) art.appendChild(foot);
+        return art;
+      }
+
+      /* ---------- reader ---------- */
+      var reader = document.getElementById("reader");
+      function openReader(e) {
+        document.getElementById("readerMeta").innerHTML =
+          tagHtml(e) + '<span class="time">' + e.date + " " + weekdayOf(e.date) + "</span>";
+        document.getElementById("readerTitle").textContent = e.title;
+        var body = document.getElementById("readerBody");
+        var html = "";
+        if (e.card) {
+          html += '<img class="card-full" src="assets/' + esc(e.cardImg) + '" alt="' + esc(e.title) + ' 的推送卡片">';
+        }
+        if (e.audio && e.audio.length) {
+          html += '<div class="audio-box"><p class="audio-title">本课音频</p>' +
+            '<p class="audio-note">每节先阿语诵读（Mishary Alafasy），再英语翻译（Ibrahim Walk）。</p>';
+          e.audio.forEach(function (a) {
+            html += '<div class="audio-item"><p class="audio-label">' + esc(a.label) + "</p>" +
+              '<audio controls preload="metadata" src="assets/' + esc(a.src) + '"></audio></div>';
+          });
+          html += "</div>";
+        }
+        html += '<div class="full-text">' + renderText(e.text) + "</div>";
+        body.innerHTML = html;
+        body.scrollTop = 0;
+        reader.showModal();
+      }
+      document.getElementById("readerClose").addEventListener("click", function () { reader.close(); });
+      reader.addEventListener("click", function (ev) { if (ev.target === reader) reader.close(); });
+      reader.addEventListener("close", function () {
+        document.getElementById("readerBody").querySelectorAll("audio").forEach(function (a) { a.pause(); });
+      });
+
+      /* ---------- lightbox ---------- */
+      var lightbox = document.getElementById("lightbox");
+      function openLightbox(e) {
+        var img = document.getElementById("lightboxImg");
+        img.src = "assets/" + e.cardImg;
+        img.alt = e.title + " 的推送卡片";
+        var dl = document.getElementById("lightboxDl");
+        dl.href = "assets/" + e.cardImg;
+        dl.setAttribute("download", e.card);
+        lightbox.showModal();
+      }
+      document.getElementById("lightboxClose").addEventListener("click", function () { lightbox.close(); });
+      lightbox.addEventListener("click", function (ev) { if (ev.target === lightbox) lightbox.close(); });
+
+      /* ---------- filter + search ---------- */
+      var noResults = document.getElementById("noResults");
+      function applyFilter() {
+        var q = state.q.trim().toLowerCase();
+        var anyVisible = false;
+        daysEl.querySelectorAll(".day").forEach(function (sec) {
+          var visible = 0;
+          sec.querySelectorAll(".entry").forEach(function (card) {
+            var okType = state.type === "全部" || card.dataset.type === state.type;
+            var okQ = !q || card.dataset.search.indexOf(q) !== -1;
+            var show = okType && okQ;
+            card.classList.toggle("hidden", !show);
+            if (show) visible++;
+          });
+          sec.classList.toggle("hidden", visible === 0);
+          var c = sec.querySelector(".day-count");
+          if (c) c.textContent = visible + " 条";
+          if (visible) anyVisible = true;
+        });
+        noResults.classList.toggle("hidden", anyVisible);
+      }
+      document.getElementById("searchInput").addEventListener("input", function (ev) {
+        state.q = ev.target.value;
+        applyFilter();
+      });
+    </script>
+  </body>
+</html>
