@@ -35,6 +35,7 @@
         --q-en: #33302a;
         --q-zh: #d97757;
         --q-num: #8d7c5f;
+        --q-word-line: rgba(90, 80, 60, 0.42);
         --shadow: 0 1px 2px rgba(60, 48, 24, 0.08), 0 8px 24px rgba(60, 48, 24, 0.07);
       }
       @media (prefers-color-scheme: dark) {
@@ -62,6 +63,7 @@
           --q-en: #d9d2c2;
           --q-zh: #eda27e;
           --q-num: #a2937a;
+          --q-word-line: rgba(225, 215, 195, 0.42);
           --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
         }
       }
@@ -327,6 +329,51 @@
       }
       .full-text .q-verse.q-paused .q-num::after { content: "❚❚"; opacity: 0.7; }
 
+      /* ---------- tap-a-word lookup (English lines only) ---------- */
+      .full-text .q-word {
+        cursor: pointer;
+        border-radius: 3px;
+        text-decoration: underline dotted;
+        text-decoration-color: var(--q-word-line);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .full-text .q-word:active { background: var(--accent-soft); }
+      .word-pop {
+        position: fixed; z-index: 60;
+        width: max-content; max-width: min(320px, calc(100vw - 20px));
+        background: var(--surface); color: var(--ink);
+        border: 1px solid var(--line); border-radius: 12px;
+        box-shadow: 0 16px 40px rgba(20, 16, 8, 0.28);
+        padding: 12px 30px 13px 14px;
+      }
+      .word-pop .wp-word {
+        font-family: "Noto Serif SC", "Songti SC", serif;
+        font-size: 17px; font-weight: 700; line-height: 1.3;
+        overflow-wrap: anywhere;
+      }
+      .word-pop .wp-phon { color: var(--ink-soft); font-size: 13.5px; margin-left: 8px; }
+      .word-pop .wp-lemma { color: var(--ink-soft); font-size: 12.5px; margin-top: 1px; }
+      .word-pop .wp-defs { font-size: 14.5px; line-height: 1.65; margin-top: 5px; overflow-wrap: anywhere; }
+      .word-pop .wp-speak {
+        appearance: none; cursor: pointer; margin-top: 9px;
+        display: inline-flex; align-items: center; gap: 6px;
+        font: inherit; font-size: 13.5px; font-weight: 500;
+        color: var(--ink); background: var(--surface-2);
+        border: 1px solid var(--line); border-radius: 999px;
+        padding: 5px 12px 5px 10px;
+      }
+      .word-pop .wp-speak:active { transform: translateY(1px); }
+      .word-pop .wp-speak svg { flex: none; }
+      .word-pop .wp-close {
+        position: absolute; top: 6px; right: 6px;
+        appearance: none; cursor: pointer;
+        width: 26px; height: 26px; border-radius: 50%;
+        border: 0; background: transparent; color: var(--ink-soft);
+        font-size: 14px; line-height: 1;
+      }
+
       /* ---------- lightbox ---------- */
       dialog.lightbox {
         border: 0; padding: 0; background: transparent;
@@ -389,6 +436,16 @@
         <button class="reader-close" id="readerClose" aria-label="关闭">✕</button>
       </div>
       <div class="reader-body" id="readerBody"></div>
+      <div class="word-pop hidden" id="wordPop" role="dialog" aria-label="单词释义">
+        <button class="wp-close" id="wordPopClose" type="button" aria-label="关闭释义">✕</button>
+        <div><span class="wp-word" id="wordPopWord"></span><span class="wp-phon" id="wordPopPhon"></span></div>
+        <div class="wp-lemma hidden" id="wordPopLemma"></div>
+        <div class="wp-defs" id="wordPopDefs"></div>
+        <button class="wp-speak" id="wordPopSpeak" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.4 5.6a9 9 0 0 1 0 12.8"/></svg>
+          朗读发音
+        </button>
+      </div>
     </dialog>
 
     <dialog class="reader" id="audioView" aria-label="听音频">
@@ -436,6 +493,13 @@
           ["2:20", 238.34, 288.41]
         ]
       };
+      /* Tap-a-word dictionary for the Quran lessons' English lines.
+         Source: ECDICT (github.com/skywind3000/ECDICT, open 英汉词典),
+         extracted at build time for just the words these two lessons
+         actually use. WORD_DICT: headword -> {p: 音标, t: 中文释义};
+         WORD_MAP: inflected surface form -> headword (词形还原). */
+      var WORD_DICT = {"a":{"p":"ei","t":"第一个字母 A; 一个; 第一的\\r\nart. [计] 累加器, 加法器, 地址, 振幅, 模拟, 区域, 面积, 汇编, 组件, 异步"},"about":{"p":"ә'baut","t":"prep. 在...周围, 大约, 有关, 关于\nadv. 大约, 四处, 在附近, 周围"},"against":{"p":"ә'geinst","t":"prep. 反对, 对着, 倚靠"},"alif":{"p":"'ɑ:lif","t":"n. 阿拉伯文的第一个字母"},"all":{"p":"ɒ:l","t":"a. 所有的, 全部的, 一切的\nadv. 全部, 全然\npron. 全部"},"allah":{"p":"'ælә","t":"n. 安拉"},"almost":{"p":"'ɒ:lmәust","t":"adv. 几乎, 差不多"},"alone":{"p":"ә'lәun","t":"a. 孤独的, 单独的, 独自的\nadv. 独自地"},"and":{"p":"ænd","t":"conj. 和, 与"},"anger":{"p":"'æŋgә","t":"n. 忿怒\nvt. 激怒, 使发怒\nvi. 发怒"},"are":{"p":"ɑ:","t":"be的现在时复数或第二人称单数"},"around":{"p":"ә'raund","t":"prep. 包围, 在...周围, 四处\nadv. 兜着圈子, 在附近, 到处"},"as":{"p":"æz","t":"adv. 同样地, 例如\nprep. 做为, 当作\nconj. 当...之时, 以...的方式, 像...一样, 因为"},"ask":{"p":"ɑ:sk","t":"vi. 问, 要求\nvt. 问, 要求, 邀请, 需要"},"astray":{"p":"ә'strei","t":"adv. 迷途地, 入歧途地"},"away":{"p":"ә'wei","t":"adv. 离去"},"because":{"p":"bi'kɒ:z","t":"conj. 因为"},"been":{"p":"bi:n","t":"be的过去分词"},"before":{"p":"bi'fɒ:","t":"prep. 在...之前\nconj. 在...之前\nadv. 在前"},"believe":{"p":"bi'li:v","t":"v. 相信"},"believer":{"p":"bi'li:vә","t":"n. 信徒"},"bestow":{"p":"bi'stәu","t":"vt. 授予, 使用, 贮藏, 留宿"},"blind":{"p":"blaind","t":"n. 蒙蔽物, 窗帘\na. 盲目的, 瞎的, 不加思考的\nvt. 使失明, 蒙蔽, 遮暗"},"blindly":{"p":"'blaindli","t":"adv. 轻率地, 盲目地"},"book":{"p":"buk","t":"n. 书, 书籍, 帐簿, 名册, 工作簿\nv. 登记, 预订"},"brought":{"p":"brɒ:t","t":"bring的过去式和过去分词"},"but":{"p":"bʌt","t":"prep. 除了\nconj. 但是\nadv. 仅仅"},"cause":{"p":"kɒ:z","t":"n. 原因, 目标\nvt. 引起, 使产生, 使遭受"},"certain":{"p":"'sә:tәn","t":"a. 确定的, 某一个的, 必然的"},"come":{"p":"kʌm","t":"vi. 过来, 来, 到达, 出现, 开始\ninterj. 喂"},"competent":{"p":"'kɒmpitәnt","t":"a. 能干的, 胜任的, 有效的, 足够的"},"conscious":{"p":"'kɒnʃәs","t":"a. 有意识的, 知觉的, 觉察的"},"corrupt":{"p":"kә'rʌpt","t":"a. 腐败的, 贪污的, 讹误充斥的\nvt. 使腐烂, 腐蚀, 使恶化\nvi. 腐烂, 堕落"},"corruption":{"p":"kә'rʌpʃәn","t":"n. 腐败, 堕落, 贪污"},"could":{"p":"kud","t":"aux. 可以, 能"},"darkness":{"p":"'dɑ:knis","t":"n. 黑暗, 暗, 深色, 隐密, 模糊, 无知"},"day":{"p":"dei","t":"n. 天, 日子, 白天, 工作日"},"deaf":{"p":"def","t":"a. 聋的"},"death":{"p":"deθ","t":"n. 死亡"},"deceive":{"p":"di'si:v","t":"v. 欺骗, 行骗"},"disbelieve":{"p":".disbi'li:v","t":"v. 不信, 怀疑"},"disbeliever":{"t":"怀疑者"},"disease":{"p":"di'zi:z","t":"n. 疾病, 弊病"},"do":{"p":"du:","t":"v. 做, 进行, 完成"},"doubt":{"p":"daut","t":"n. 怀疑, 疑惑\nv. 怀疑, 不信"},"dread":{"p":"dred","t":"n. 恐惧, 可怕的人(或事)\na. 可怕的, 可怖的\nv. 恐惧, 害怕"},"due":{"p":"dju:","t":"n. 应得的东西, 应付款\na. 到期的, 应得的, 应付的, 约定的"},"dumb":{"p":"dʌm","t":"a. 哑的, 不说话的, 无声音的"},"ear":{"p":"iә","t":"n. 耳朵, 倾听, 听觉, 穗\nvi. 抽穗"},"earn":{"p":"ә:n","t":"vt. 赚得, 获得, 博得"},"earth":{"p":"ә:θ","t":"n. 地球, 泥土, 世界, 尘世\nvt. 埋入土中, 赶入洞内\nvi. 躲入洞内"},"encompass":{"p":"in'kʌmpәs","t":"vt. 围绕, 完成, 包括, 包含, 环绕, 包围"},"entirely":{"p":"in'taiәli","t":"adv. 完全, 全然, 一概"},"error":{"p":"'erә","t":"n. 错误, 过失, 失误, 误差"},"especially":{"p":"i'speʃәli","t":"adv. 尤其, 特别, 格外"},"establish":{"p":"i'stæbliʃ","t":"vt. 建立, 确立, 制定\nvi. 移植生长"},"every":{"p":"'evri","t":"a. 每一, 所有的"},"evil":{"p":"'i:vl","t":"n. 邪恶, 不幸, 罪恶\na. 邪恶的, 不幸的, 有害的, 讨厌的"},"example":{"p":"ig'zæmpl","t":"n. 例子, 样本, 实例"},"except":{"p":"ik'sept","t":"vt. 除, 除外\nvi. 反对\nprep. 除了...之外, 若不是, 除非"},"exchange":{"p":"iks'tʃeindʒ","t":"n. 交换, (电话)交换局, 交换机, 汇兑, 交易所\nv. 交换, 交易, 兑换"},"faith":{"p":"feiθ","t":"n. 信心, 信任, 忠实, 保证"},"favor":{"p":"'feivә","t":"n. 好意, 喜爱\nvt. 赐予, 支持, 喜欢, 证实"},"finger":{"p":"'fiŋgә","t":"n. 手指, 指状物, (手套的)手指部分, 指针\nv. 用手指拨弄, 伸出"},"fire":{"p":"'faiә","t":"n. 火, 炉火, 电炉, 火灾, 闪光体, 炮火, 热情\nvt. 点燃, 烧制, 使发光, 激动, 放枪, 解雇\nvi. 着火, 烧火, 开枪, 射击, 激动"},"foolish":{"p":"'fu:liʃ","t":"a. 愚蠢的, 傻的"},"for":{"p":"fɒ:","t":"prep. 为, 因为, 至于\nconj. 因为"},"from":{"p":"frɒm","t":"prep. 从, 来自, 根据"},"great":{"p":"greit","t":"a. 大的, 非常的, 主要的, 重大的, 崇高的, 伟大的\nadv. 顺利地, 得意地\nn. 全部, 大人物, 大师"},"guidance":{"p":"'gaidns","t":"n. 指导, 领导"},"guide":{"p":"gaid","t":"n. 引导者, 导游, 指南, 路标\nvt. 指导, 支配, 管理, 带领, 操纵\nvi. 任向导"},"habitually":{"p":"hә'bitjjәli","t":"adv. 习惯(性), 惯常, 习以为常, 出于习惯, 已成规则"},"have":{"p":"hæv","t":"vt. 有, 怀有, 拿, 进行\naux. 已经"},"he":{"p":"hi:","t":"pron. 他\nn. 男孩, 男人, 雄性动物"},"hear":{"p":"hiә","t":"vt. 听到, 倾听, 听说, 审理\nvi. 听见, 听"},"heart":{"p":"hɑ:t","t":"n. 心, 心脏, 中心, 内心, 感情, 精神, 心情, 宝贝儿\nvt. 鼓励"},"help":{"p":"help","t":"n. 帮忙, 帮助者, 补救办法, 有益的东西\nvt. 帮助, 帮忙, 接济, 治疗, 款待\nvi. 有用, 救命, 招待"},"hereafter":{"p":".hiәr'ɑ:ftә","t":"n. 将来, 来世\nadv. 此后, 将来, 来世"},"him":{"p":"him","t":"pron. 他"},"if":{"p":"if","t":"conj. 如果, 是否, 无论何时, 假设, 即使\nn. 条件"},"illuminate":{"p":"i'lju:mineit","t":"vt. 照明, 用灯装饰, 阐明, 说明, 使灿烂\nvi. 照亮, 用灯装饰"},"in":{"p":"in","t":"prep. 在...期间, 在...之内, 处于...之中, 从事于, 按照, 穿着\nadv. 进入, 朝里, 在里面, 在屋里\na. 在里面的, 在朝的"},"increase":{"p":"in'kri:s","t":"n. 增加, 增进, 利益\nvt. 增加, 加大\nvi. 增加, 繁殖"},"indeed":{"p":"in'di:d","t":"adv. 的确, 实在, 真正地, 甚至"},"is":{"p":"iz","t":"be的现在式第三人称"},"it":{"p":"it","t":"pron. 它"},"kindle":{"p":"'kindl","t":"vt. 点燃, 使着火, 引起, 照亮\nvi. 着火, 激动, 发亮"},"know":{"p":"nәu","t":"v. 知道, 了解, 认识, 确信"},"lam":{"p":"læm","t":"v. 打, 鞭笞, 逃脱\nn. 逃亡"},"last":{"p":"lɑ:st","t":"a. 最后的, 末尾的, 最近的\nvi. 持续, 支持, 维持\nvt. 使维持, 够...用"},"left":{"p":"left","t":"a. 左边的, 左倾的, 左侧的, 左派的\nadv. 在左面\nn. 左, 左面, 左派"},"lie":{"p":"lai","t":"n. 谎言, 假象, 位置\nvi. 躺着, 说谎, 位于, 展现, 存在, 停泊\nvt. 谎骗"},"light":{"p":"lait","t":"n. 光, 光亮, 灯, 日光, 发光体, 光源, 杰出人物, 火花, 眼光\na. 轻的, 少量的, 轻微的, 轻快的, 轻浮的, 明亮的, 淡色的, 容易的\nvt. 点燃, 照亮"},"lightning":{"p":"'laitniŋ","t":"n. 闪电\nvi. 闪电\na. 闪电的"},"like":{"p":"laik","t":"a. 相似的, 同样的\nvt. 喜欢, 愿意, 想\nvi. 喜欢, 希望"},"lord":{"p":"lɒ:d","t":"n. 统治者, 阁下, 上帝\nvi. 称王, 作威作福\nvt. 使成贵族"},"meet":{"p":"mi:t","t":"n. 会, 集会\na. 适宜的, 合适的\nvt. 遇见, 引见, 认识, 满足, 对付"},"merciful":{"p":"'mә:siful","t":"a. 仁慈的, 慈悲的"},"mock":{"p":"mɒk","t":"n. 嘲笑, 戏弄, 模仿\na. 假的, 伪造的, 模拟的\nadv. 虚伪地"},"mockers":{"t":"使（活动等）告吹；使倒霉"},"mu":{"p":"mju:","t":"n. 希腊字母(M,μ)"},"name":{"p":"neim","t":"n. 名字, 名称, 姓名, 名义, 名誉, 文件名\nvt. 命名, 称呼, 任命, 提名, 列举\na. 姓名的, 据以取名的"},"no":{"p":"nәu","t":"n. 不, 拒绝, 否决票\na. 没有, 不是, 绝非\nadv. 不"},"nor":{"p":"nɒ:","t":"conj. 也不, 也没有"},"not":{"p":"nɒt","t":"adv. 不, 非, 未"},"o":{"p":"әu","t":"interj. 啊, 唉, 哎呀, 哦\nn. 零"},"of":{"p":"ɒv","t":"prep. 的, 属于"},"on":{"p":"ɒn","t":"prep. 在...之上\nadv. ...上去\na. 正起作用的"},"one":{"p":"wʌn","t":"n. 一(个)\npron. 一, 任何人\nnum. 一, 一个"},"only":{"p":"'әunli","t":"a. 唯一的, 仅有的, 最佳的\nadv. 只有, 仅仅, 只能\nconj. 但是, 不过"},"or":{"p":"ɒ:","t":"conj. 或, 或者"},"out":{"p":"aut","t":"a. 外面的, 熄灭的, 结束的\nadv. 在外, 熄灭, 出现\nprep. 出自, 离去, 向"},"over":{"p":"'әuvә","t":"adv. 结束, 越过, 从头到尾\nprep. 在...之上, 遍于...之上, 越过\na. 上面的"},"painful":{"p":"'peinful","t":"a. 痛苦的, 困难的, 令人烦恼的"},"path":{"p":"pɑ:θ","t":"n. 路径, 小路, 道路, 途径, 路线, 轨道"},"people":{"p":"'pi:pl","t":"n. 人, 人民, 民族, 平民\nvt. 使住满人, 居住于"},"perceive":{"p":"pә'si:v","t":"vt. 感觉, 认知, 理解, 意识到"},"praise":{"p":"preiz","t":"n. 赞美, 称赞, 崇拜\nvt. 称赞, 赞美\nvi. 赞扬, 表扬"},"prayer":{"p":"prєә. 'preiә","t":"n. 祈祷, 恳求, 祷辞, 祈祷者"},"profit":{"p":"'prɒfit","t":"n. 利润, 赢利, 利益\nvi. 有益, 获利, 赚钱\nvt. 有益于"},"prolong":{"p":"prәu'lɒŋ","t":"vt. 延长, 拖延, 拖长"},"provide":{"p":"prә'vaid","t":"vt. 提供, 供应, 规定, 预备\nvi. 作准备, 抚养, 规定"},"punishment":{"p":"'pʌniʃmәnt","t":"n. 处罚, 刑罚, 惩罚"},"purchase":{"p":"'pә:tʃәs","t":"n. 购买, 购买品, 紧握, 绞辘\nvt. 购买, 赢得, 努力取得, 用滑轮起(锚等)"},"put":{"p":"put","t":"vt. 放, 摆, 安置, 移动, 发射, 投掷, 写上, 表达, 使从事, 使受到, 驱使, 赋予\nvi. 出发, 航行, 发芽\nn. 掷, 股票出售权, 笨蛋"},"rainstorm":{"p":"'reinstɒ:m","t":"n. 雨暴"},"recompense":{"p":"'rekәmpens","t":"n. 报偿, 酬金, 赔偿\nvt. 报偿, 赔偿, 报酬"},"reformer":{"p":"ri'fɒ:mә","t":"n. 改革家, 改革运动者"},"return":{"p":"ri'tә:n","t":"n. 回来, 返回, 来回票, 归还, 报答, 利润率, 报告书\na. 返回的, 回程的, 报答的, 反向的, 重现的, 复原的\nvi. 返回, 归还, 回来"},"reveal":{"p":"ri'vi:l","t":"vt. 露出, 显示, 透露, 揭露, 泄露, (神)启示\nn. 窗侧, 门侧"},"right":{"p":"rait","t":"n. 权利, 右边, 正义, 右派, 公正\na. 正确的, 对的, 恰当的, 正常的, 正直的, 正面的, 右方的\nadv. 正确地, 以有利结果, 一直, 直接, 向右"},"same":{"p":"seim","t":"a. 相同的, 同样的\npron. 相同的人(或事物)\nadv. 同样地"},"say":{"p":"sei","t":"vt. 说, 讲, 念, 说明, 指明\nvi. 说, 讲\nn. 意见, 发言权"},"seal":{"p":"si:l","t":"n. 印章, 封条, 海豹, 海豹皮, 火漆, 封蜡, 玺, 保证, 批准, 象征, 标志\nvt. 封闭, 盖印, 盖章\nvi. 猎海豹"},"see":{"p":"si:","t":"vt. 看见, 查看, 参观, 游览, 理解, 知道, 同意\nvi. 看, 观看, 注意, 知道, 考虑\nn. 主教的职位"},"set":{"p":"set","t":"n. 日落, 同伙, 组合, 集合, 装置\nvt. 放, 安置, 放置, 设定, 使凝结, 点燃, 确定, 点缀, 使就位, 树立, 分配, 调整"},"should":{"p":"ʃud","t":"aux. 应该, 将要"},"sight":{"p":"sait","t":"n. 景观, 视力, 眼界, 阅读, 见解, 意见\nvt. 看见, 瞄准\nvi. 瞄准, 观看"},"sky":{"p":"skai","t":"n. 天空, 天色, 天堂\nvt. 击向空中, 挂在高处\nvi. 高涨"},"snatch":{"p":"snætʃ","t":"n. 抢夺, 攫取, 片断\nvt. 夺取, 攫取\nvi. 想抢走, 攫取"},"so":{"p":"sәu","t":"adv. 如此, 如是, 如...那样\nconj. 所以, 因此\npron. 这样"},"some":{"p":"sʌm","t":"pron. 一些, 一部分, 若干\nadv. 大约\na. 一些的, 少许的, 某一的"},"sovereign":{"p":"'sɒvrin","t":"n. 元首, 独立国\na. 具有主权的, 至高无上的, 国王的, 完全的"},"spend":{"p":"spend","t":"vt. 花费, 浪费, 度过, 消耗, 消磨\nvi. 花费, 用尽"},"stand":{"p":"stænd","t":"n. 站立, 站住, 停顿, 讲台, 看台, 立场, 法院证人席\nvi. 站, 立, 坐落, 停滞, 位于, 坚持, 维持原状\nvt. 忍受, 使站立, 抵挡"},"still":{"p":"stil","t":"n. 蒸馏室, 寂静, 剧照\nv. 蒸馏, (使)平静, (使)静止\na. 静止的, 不动的, 静寂的, 不起泡的, 静物摄影的"},"straight":{"p":"streit","t":"n. 直线, 直\na. 直的, 笔直的, 正直的, 直接的, 连续的, 整齐的\nadv. 直接地, 立即, 不断地"},"successful":{"p":"sәk'sesful","t":"a. 成功的, 一帆风顺的, 顺利的"},"taken":{"p":"'teikәn","t":"take的过去分词"},"that":{"p":"ðæt","t":"a. 那, 那个\nconj. 以致, 因为\npron. 那"},"the":{"p":"ðә","t":"art. 那"},"their":{"p":"ðєә","t":"pron. 他们的"},"them":{"p":"ðem","t":"pron. 他们, 她们, 它们"},"themselves":{"p":"ðәm'selvz","t":"pron. 他们自己, 她们自己, 它们自己"},"there":{"p":"ðєә","t":"adv. 在那里"},"therein":{"p":".ðєәr'in","t":"adv. 在其中, 在那里, 在那一点上"},"they":{"p":"ðei","t":"pron. 他们, 它们"},"thing":{"p":"θiŋ","t":"n. 事物, 东西, 物, 用品, 事, 事件, 情况, 行为, 特征"},"think":{"p":"θiŋk","t":"vt. 想, 考虑, 想起, 想像, 打算, 认为\nvi. 思考, 料想\nn. 想法"},"this":{"p":"θis","t":"pron. 这, 本\na. 这, 本\nadv. 这么"},"those":{"p":"ðәuz","t":"pron. 那些"},"thunder":{"p":"'θʌndә","t":"n. 雷, 雷声\nvi. 打雷, 轰隆地响, 怒喝\nvt. 大声喊出, 轰隆地发出"},"thunderclap":{"p":"'θʌndәklæp","t":"n. 雷声, 霹雳, 晴天霹雳"},"time":{"p":"taim","t":"n. 时间, 时侯, 时机, 时期, 期限, 次数, 节拍, 暂停, 规定时间\nvt. 测定...的时间, 记录...的时间, 计时, 定时"},"to":{"p":"tu:","t":"prep. 到, 向, 趋于\nadv. 向前"},"took":{"p":"tuk","t":"take的过去式"},"transaction":{"p":"træn'sækʃәn","t":"n. 交易, 办理, 学报, 和解协议"},"transgression":{"p":"træns'greʃәn","t":"n. 违反, 犯罪"},"unquestionably":{"t":"adv. 毫无疑问, 不成问题, 无可非议, 确实"},"unseen":{"p":".ʌn'si:n","t":"a. 未被看见的, 看不见的"},"upon":{"p":"ә'pɒn","t":"prep. 在...之上, 迫近, 紧接着"},"us":{"p":"ʌs","t":"pron. 我们"},"use":{"p":"ju:s","t":"n. 使用, 习惯, 使用价值, 用法, 使用权\nvt. 使用, 利用, 运用, 耗费\nvi. 惯常"},"veil":{"p":"veil","t":"n. 面纱, 面罩, 借口, 幕, 帐, 遮蔽物\nvt. 戴面纱, 隐藏, 遮蔽, 掩饰\nvi. 蒙上面纱"},"vision":{"p":"'viʒәn","t":"n. 视觉, 眼光, 视力, 幻想\nvt. 梦见, 想象, 显示"},"walk":{"p":"wɒ:k","t":"n. 走, 散步, 步行, 行走的路程, 竞走, 散步场所\nvi. 走路, 步行, 处世\nvt. 走过, 遛, 使走, 护送...走"},"wander":{"p":"'wɒndә","t":"vi. 游荡, 漫步, 徘徊, 迷路, 离题, 蜿蜒\nvt. 在...漫游"},"warn":{"p":"wɒ:n","t":"vt. 警告, 提醒, 通知\nvi. 发出警告"},"was":{"p":"wɒz","t":"be的过去式"},"way":{"p":"wei","t":"n. 路, 路线, 路途, 方法, 道路, 情形, 规模, 习惯, 行业, 方面\nadv. 远远地, 非常"},"we":{"p":"wi:","t":"pron. 我们"},"were":{"p":"wә:","t":"be的过去式"},"what":{"p":"hwɒt","t":"pron. 什么\ninterj. 怎么, 多么\na. 什么的"},"when":{"p":"hwen","t":"conj. 当...的时候\nadv. 何时, 什么时候\npron. 什么时侯"},"whether":{"p":"'hweðә","t":"conj. 是否, 不论\npron. 两个中的哪一个"},"which":{"p":"hwitʃ","t":"pron. 哪一个, 那一个"},"while":{"p":"hwail","t":"n. 一会儿, (一段)时间\nconj. 当...的时候, 虽然\nvt. 消磨"},"who":{"p":"hu:","t":"pron. 谁"},"whom":{"p":"hu:m","t":"pron. 谁"},"will":{"p":"wil","t":"n. 意志, 决心, 意愿, 意向, 干劲, 遗嘱\nvt. 用意志的力量驱使, 决意, 愿意, 立遗嘱\nvi. 下决心, 愿意"},"willed":{"p":"wild","t":"a. 有...意志的"},"with":{"p":"wið","t":"prep. 和...在一起, 以, 由于"},"within":{"p":"wi'ðin","t":"n. 内部, 里头\nadv. 在内部, 在内心里\nprep. 在...之内"},"world":{"p":"wә:ld","t":"n. 世界, 地球, 宇宙, 万物, 世人, 人间, 领域, 世事, 世故, 社会生活, 大量"},"worship":{"p":"'wә:ʃip","t":"n. 崇拜, 礼拜, 尊敬\nvi. 参加礼拜\nvt. 崇拜, 尊敬"},"you":{"p":"ju:","t":"pron. 你, 你们"},"your":{"p":"juә","t":"pron. 你的, 你们的"}};
+      var WORD_MAP = {"believed":"believe","believers":"believer","bestowed":"bestow","comes":"come","corrupters":"corrupt","disbelievers":"disbeliever","earned":"earn","ears":"ear","encompassing":"encompass","fingers":"finger","guided":"guide","had":"have","has":"have","hearing":"hear","hearts":"heart","illuminated":"illuminate","increased":"increase","kindled":"kindle","lights":"light","mocks":"mock","ones":"one","prolongs":"prolong","provided":"provide","purchased":"purchase","reformers":"reformer","revealed":"reveal","said":"say","snatches":"snatch","things":"thing","thunderclaps":"thunderclap","used":"use","worlds":"world"};
       var TYPE_META = {
         "晨读": { cls: "morning", time: "06:00" },
         "30u30": { cls: "paper", time: "10:00" },
@@ -494,6 +558,33 @@
       function linkifyEsc(s) {
         return esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
       }
+      /* English lines of a lesson: words the ECDICT table knows become
+         tappable lookup spans; every other word stays plain text. URLs are
+         split out first so they are never tokenized. */
+      function dictKeyFor(token) {
+        var lower = token.toLowerCase();
+        if (Object.prototype.hasOwnProperty.call(WORD_MAP, lower)) return WORD_MAP[lower];
+        if (Object.prototype.hasOwnProperty.call(WORD_DICT, lower)) return lower;
+        var n = lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (n !== lower) {
+          if (Object.prototype.hasOwnProperty.call(WORD_MAP, n)) return WORD_MAP[n];
+          if (Object.prototype.hasOwnProperty.call(WORD_DICT, n)) return n;
+        }
+        return null;
+      }
+      var WORD_SPLIT = /([A-Za-z\u00C0-\u024F\u1E00-\u1EFF]+(?:['\u2019\-][A-Za-z\u00C0-\u024F\u1E00-\u1EFF]+)*)/;
+      function enHtml(s) {
+        return s.split(/(https?:\/\/[^\s<]+)/).map(function (seg, si) {
+          if (si % 2 === 1) return linkifyEsc(seg);
+          return seg.split(WORD_SPLIT).map(function (part, pi) {
+            if (pi % 2 !== 1) return esc(part);
+            var key = dictKeyFor(part);
+            return key
+              ? '<span class="q-word" role="button" data-k="' + key + '">' + esc(part) + "</span>"
+              : esc(part);
+          }).join("");
+        }).join("");
+      }
       function renderQuranText(text) {
         var out = [];
         var introBuf = [];
@@ -533,7 +624,7 @@
             html = '<p class="q-ar-row"><span class="q-label">原文</span>' +
               '<span class="q-ar" dir="rtl" lang="ar">' + esc(ln.slice("阿拉伯原文：".length).trim()) + "</span></p>";
           } else if ((m = ln.match(/^(英译(?:（[^）]*）)?)：([\s\S]*)$/))) {
-            html = '<p class="q-en"><span class="q-label">' + esc(m[1]) + "</span>" + linkifyEsc(m[2]) + "</p>";
+            html = '<p class="q-en"><span class="q-label">' + esc(m[1]) + "</span>" + enHtml(m[2]) + "</p>";
           } else if ((m = ln.match(/^(中译(?:（[^）]*）)?)：([\s\S]*)$/))) {
             html = '<p class="q-zh"><span class="q-label">' + esc(m[1]) + "</span>" + linkifyEsc(m[2]) + "</p>";
           } else if (hasArabic(ln)) {
@@ -544,7 +635,7 @@
           } else if (/[\u4e00-\u9fff]/.test(ln)) {
             html = '<p class="q-zh"><span class="q-label">中译（马坚）</span>' + linkifyEsc(ln) + "</p>";
           } else {
-            html = '<p class="q-en"><span class="q-label">英译（Saheeh International）</span>' + linkifyEsc(ln) + "</p>";
+            html = '<p class="q-en"><span class="q-label">英译（Saheeh International）</span>' + enHtml(ln) + "</p>";
           }
           if (verse) verse.push(html); else out.push(html);
         });
@@ -875,6 +966,91 @@
           });
         });
       }
+
+      /* ---------- tap-a-word lookup (点词查意) ----------
+         Tapping an English word in a lesson's 英译 line opens a small card
+         with its ECDICT 音标 + 中文释义 and a 朗读发音 button (speechSynthesis,
+         no external audio). The word click is intercepted in the capture
+         phase on the reader body and stopped there, so it can never reach
+         the verse block's tap-to-listen toggle; taps anywhere else in the
+         verse behave exactly as before. */
+      var wordPop = document.getElementById("wordPop");
+      var wordPopWord = document.getElementById("wordPopWord");
+      var wordPopPhon = document.getElementById("wordPopPhon");
+      var wordPopLemma = document.getElementById("wordPopLemma");
+      var wordPopDefs = document.getElementById("wordPopDefs");
+      var popWord = null;   /* surface word shown in the open card */
+
+      function stopSpeech() {
+        if ("speechSynthesis" in window) speechSynthesis.cancel();
+      }
+      function hideWordPop() {
+        if (wordPop.classList.contains("hidden")) return;
+        wordPop.classList.add("hidden");
+        popWord = null;
+        stopSpeech();
+      }
+      function showWordPop(span) {
+        var key = span.getAttribute("data-k");
+        var entry = key && WORD_DICT[key];
+        if (!entry) return;
+        stopSpeech();   /* switching words drops any reading in progress */
+        popWord = span.textContent;
+        wordPopWord.textContent = popWord;
+        wordPopPhon.textContent = entry.p ? "/" + entry.p + "/" : "";
+        var base = popWord.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (key !== base) {
+          wordPopLemma.textContent = "原形：" + key;
+          wordPopLemma.classList.remove("hidden");
+        } else {
+          wordPopLemma.classList.add("hidden");
+        }
+        wordPopDefs.innerHTML = entry.t.split("\n").map(esc).join("<br>");
+        wordPop.classList.remove("hidden");
+        /* Anchor under the word, clamped to the viewport with a margin;
+           flips above the word when there is no room below. */
+        var r = span.getBoundingClientRect();
+        var M = 10;
+        var pw = wordPop.offsetWidth, ph = wordPop.offsetHeight;
+        var left = Math.min(Math.max(M, r.left), Math.max(M, window.innerWidth - pw - M));
+        var top = r.bottom + 8;
+        if (top + ph > window.innerHeight - M) top = Math.max(M, r.top - ph - 8);
+        wordPop.style.left = left + "px";
+        wordPop.style.top = top + "px";
+      }
+      document.getElementById("readerBody").addEventListener("click", function (ev) {
+        var w = ev.target && ev.target.closest ? ev.target.closest(".q-word") : null;
+        if (!w) return;
+        ev.stopPropagation();   /* the verse tap-to-listen must never see this */
+        ev.preventDefault();
+        showWordPop(w);
+      }, true);
+      document.addEventListener("click", function (ev) {
+        if (wordPop.classList.contains("hidden")) return;
+        if (ev.target.closest && ev.target.closest("#wordPop")) return;
+        if (ev.target.closest && ev.target.closest(".q-word")) return;
+        hideWordPop();
+      });
+      document.getElementById("wordPopClose").addEventListener("click", function () { hideWordPop(); });
+      document.getElementById("readerBody").addEventListener("scroll", hideWordPop);
+      reader.addEventListener("close", hideWordPop);
+      document.getElementById("wordPopSpeak").addEventListener("click", function () {
+        if (!popWord) return;
+        /* Reading a word aloud first pauses the lesson audio (no resume). */
+        document.getElementById("readerBody").querySelectorAll("audio").forEach(function (a) { a.pause(); });
+        if (!("speechSynthesis" in window)) return;
+        speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(popWord);
+        var voices = speechSynthesis.getVoices();
+        var gb = null, us = null;
+        voices.forEach(function (v) {
+          if (/^en-GB/i.test(v.lang) && !gb) gb = v;
+          if (/^en-US/i.test(v.lang) && !us) us = v;
+        });
+        if (gb) { u.voice = gb; u.lang = "en-GB"; } else if (us) { u.voice = us; u.lang = "en-US"; } else { u.lang = "en-US"; }
+        u.rate = 0.9;
+        speechSynthesis.speak(u);
+      });
 
       /* ---------- lightbox ---------- */
       var lightbox = document.getElementById("lightbox");
