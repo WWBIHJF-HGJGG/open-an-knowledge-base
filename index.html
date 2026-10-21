@@ -509,11 +509,14 @@
           } else if ((m = ln.match(/^(中译(?:（[^）]*）)?)：([\s\S]*)$/))) {
             html = '<p class="q-zh"><span class="q-label">' + esc(m[1]) + "</span>" + linkifyEsc(m[2]) + "</p>";
           } else if (hasArabic(ln)) {
-            html = '<p class="q-ar" dir="rtl" lang="ar">' + esc(ln) + "</p>";
+            /* Bare archive lines (lesson 1) get the same labels as the
+               annotated format (lesson 2), so both lessons render alike. */
+            html = '<p class="q-ar-row"><span class="q-label">原文</span>' +
+              '<span class="q-ar" dir="rtl" lang="ar">' + esc(ln) + "</span></p>";
           } else if (/[\u4e00-\u9fff]/.test(ln)) {
-            html = '<p class="q-zh">' + linkifyEsc(ln) + "</p>";
+            html = '<p class="q-zh"><span class="q-label">中译（马坚）</span>' + linkifyEsc(ln) + "</p>";
           } else {
-            html = '<p class="q-en">' + linkifyEsc(ln) + "</p>";
+            html = '<p class="q-en"><span class="q-label">英译（Saheeh International）</span>' + linkifyEsc(ln) + "</p>";
           }
           if (verse) verse.push(html); else out.push(html);
         });
