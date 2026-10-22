@@ -1138,12 +1138,19 @@
           wordPopBase.classList.add("hidden");
         }
         wordPop.classList.remove("hidden");
-        /* Anchor under the word, clamped to the viewport with a margin;
-           flips above the word when there is no room below. */
+        /* Anchor under the word, clamped horizontally to the reader
+           dialog's inner edges (10px inset) so the card never pokes past
+           the dialog on wide screens; it slides left to hug the dialog's
+           right edge when the tapped word sits near the end of a line.
+           Vertically it stays clamped to the viewport as before, flipping
+           above the word when there is no room below. */
         var r = span.getBoundingClientRect();
         var M = 10;
         var pw = wordPop.offsetWidth, ph = wordPop.offsetHeight;
-        var left = Math.min(Math.max(M, r.left), Math.max(M, window.innerWidth - pw - M));
+        var dlg = reader.getBoundingClientRect();
+        var dlgMin = dlg.left + M;
+        var dlgMax = Math.max(dlgMin, dlg.right - pw - M);
+        var left = Math.min(Math.max(dlgMin, r.left), dlgMax);
         var top = r.bottom + 8;
         if (top + ph > window.innerHeight - M) top = Math.max(M, r.top - ph - 8);
         wordPop.style.left = left + "px";
