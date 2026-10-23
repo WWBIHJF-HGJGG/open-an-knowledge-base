@@ -553,6 +553,66 @@
           ["2:29", 343.28, 364.92, 379.16, 343.28, 364.92, 365.55, 378.85], ["2:30", 379.16, 409.66, 434.69, 379.16, 409.65, 411.15, 434.69]
         ]
       };
+      /* Measured end time of every Arabic word, per verse, keyed like
+         VERSE_TIMINGS. Derived from each per-verse source MP3's energy
+         curve (see make_timings.py): a word's boundary sits where the
+         recitation's cumulative energy reaches that word's share, so an
+         elongated word holds the cursor longer, a quick run of words
+         lets it catch up, and the last word's boundary lands where
+         the voice actually stops — a few hundredths before the
+         segment's arEnd — instead of the cursor still marching
+         uniformly after the reciter has finished. The reading cursor
+         paints the Arabic line from these boundaries whenever their
+         count matches the line's word spans, and falls back to the
+         speech-window sweep otherwise. English keeps the sweep: its
+         pacing already tracks the voice. */
+      var AR_WORD_ENDS = {
+        "quran_al-fatihah_1-7.mp3": {
+          "1:1": [0.86, 1.63, 4.06, 5.99],
+          "1:2": [14.61, 15.07, 15.75, 18.70],
+          "1:3": [26.19, 28.33],
+          "1:4": [34.92, 36.27, 38.15],
+          "1:5": [42.77, 44.02, 45.93, 48.25],
+          "1:6": [54.73, 56.13, 58.91],
+          "1:7": [62.84, 63.98, 65.26, 66.74, 67.67, 69.97, 71.43, 72.34, 75.50]
+        },
+        "quran_al-baqarah_1-10.mp3": {
+          "2:1": [7.57],
+          "2:2": [12.18, 13.48, 13.85, 15.08, 15.39, 16.73, 16.92, 18.06, 20.24],
+          "2:3": [28.30, 29.33, 30.63, 32.23, 33.71, 34.60, 36.13, 38.80],
+          "2:4": [49.09, 50.49, 51.07, 52.41, 53.48, 54.36, 55.57, 56.27, 57.85, 60.52, 61.26, 63.05],
+          "2:5": [76.74, 77.30, 77.97, 78.18, 79.23, 79.60, 82.01, 82.62, 86.75],
+          "2:6": [94.38, 95.63, 96.61, 97.35, 98.25, 100.34, 100.88, 101.64, 104.11, 104.73, 106.33],
+          "2:7": [116.44, 117.02, 117.37, 118.92, 120.01, 121.43, 121.61, 122.17, 123.26, 124.54, 125.31, 126.17, 127.40, 128.86],
+          "2:8": [139.56, 140.81, 141.37, 142.09, 143.27, 144.39, 145.97, 147.94, 148.66, 149.31, 150.75],
+          "2:9": [160.96, 161.50, 162.19, 163.33, 164.14, 165.77, 166.54, 168.25, 169.41, 172.25],
+          "2:10": [181.20, 182.37, 182.97, 184.50, 185.36, 186.08, 186.31, 187.43, 188.17, 189.12, 190.00, 191.51, 194.16]
+        },
+        "quran_al-baqarah_11-20.mp3": {
+          "2:11": [0.77, 1.30, 1.83, 2.11, 4.06, 4.27, 5.20, 6.69, 7.94, 9.10, 10.59],
+          "2:12": [19.83, 20.55, 20.92, 23.18, 24.85, 25.50, 28.33],
+          "2:13": [35.31, 36.13, 37.22, 38.68, 39.33, 40.98, 42.47, 44.67, 46.55, 47.51, 49.06, 49.92, 50.06, 50.45, 51.01, 51.78, 53.87, 55.31, 56.21, 58.91],
+          "2:14": [74.06, 75.41, 76.52, 78.38, 80.17, 81.31, 82.98, 83.72, 84.81, 86.44, 87.88, 88.32, 89.48, 91.13, 92.29, 96.79],
+          "2:15": [110.16, 110.72, 111.51, 112.92, 113.57, 115.38, 117.50],
+          "2:16": [125.50, 126.06, 126.66, 128.17, 129.08, 129.36, 130.33, 132.28, 133.00, 134.79, 137.09],
+          "2:17": [148.91, 149.77, 150.95, 152.79, 154.25, 155.34, 156.27, 156.62, 158.45, 159.50, 160.59, 162.38, 163.28, 163.68, 166.02, 166.72, 169.41],
+          "2:18": [182.71, 183.73, 185.05, 185.91, 186.56, 189.58],
+          "2:19": [197.27, 198.50, 199.08, 200.38, 200.92, 202.52, 203.45, 204.59, 206.38, 207.44, 207.81, 210.16, 210.62, 212.64, 212.99, 214.22, 214.59, 216.87, 218.03, 221.84],
+          "2:20": [239.94, 242.66, 243.94, 245.54, 245.66, 246.19, 246.61, 247.28, 249.14, 250.25, 251.14, 252.20, 253.81, 255.78, 255.97, 256.57, 257.17, 257.82, 258.57, 260.10, 262.79, 262.91, 263.19, 263.63, 264.05, 264.79, 266.41, 268.71]
+        },
+        "quran_al-baqarah_21-30.mp3": {
+          "2:21": [0.95, 1.53, 2.25, 3.16, 4.20, 5.57, 7.29, 7.78, 9.31, 11.10, 13.42],
+          "2:22": [23.19, 23.49, 24.10, 25.47, 26.42, 29.02, 30.32, 32.06, 32.60, 34.64, 35.43, 36.91, 37.91, 38.47, 40.65, 42.02, 43.25, 43.79, 45.32, 46.43, 47.02, 48.92, 50.31, 53.22],
+          "2:23": [74.21, 75.38, 75.91, 76.77, 77.86, 79.16, 79.56, 80.53, 82.27, 83.97, 84.43, 85.99, 87.26, 89.68, 90.33, 91.23, 92.44, 93.21, 94.67, 96.99],
+          "2:24": [113.31, 113.84, 114.84, 115.49, 116.30, 117.63, 118.35, 118.69, 119.90, 121.25, 122.76, 123.01, 124.55, 127.15],
+          "2:25": [139.00, 139.54, 140.60, 141.95, 143.46, 143.90, 144.46, 145.83, 147.27, 147.83, 150.01, 151.31, 151.49, 152.61, 152.98, 153.65, 154.21, 155.44, 156.37, 156.79, 157.86, 158.51, 159.06, 160.13, 160.43, 161.46, 161.76, 163.22, 164.31, 166.40, 166.59, 167.38, 168.40, 169.47, 170.74, 171.09, 171.49, 173.21, 176.46],
+          "2:26": [203.15, 203.53, 204.38, 204.66, 205.52, 206.34, 207.57, 208.66, 209.01, 210.89, 211.68, 212.91, 213.28, 215.14, 216.25, 217.11, 218.08, 218.64, 219.55, 220.20, 221.50, 221.80, 223.52, 224.61, 225.86, 227.84, 228.88, 229.56, 229.97, 230.39, 230.97, 231.23, 232.11, 232.95, 234.43, 235.55, 236.31, 238.33, 239.17, 240.14, 240.82, 241.77, 242.67, 245.81],
+          "2:27": [275.65, 277.08, 277.48, 278.27, 278.50, 279.41, 281.57, 283.59, 284.00, 284.72, 285.49, 285.95, 286.49, 287.60, 289.25, 290.00, 292.34, 292.50, 293.83, 294.52, 297.87],
+          "2:28": [312.19, 313.12, 313.94, 315.03, 316.35, 318.32, 318.49, 319.56, 321.06, 321.65, 323.60, 324.41, 325.76, 329.28],
+          "2:29": [343.65, 344.42, 345.02, 345.88, 346.44, 347.43, 349.83, 351.34, 352.22, 354.12, 354.80, 356.86, 359.07, 359.81, 361.34, 361.53, 362.09, 362.85, 363.62, 364.90],
+          "2:30": [380.05, 380.40, 381.07, 382.35, 382.76, 383.51, 384.25, 385.57, 387.50, 387.76, 389.29, 389.89, 390.36, 390.59, 391.15, 391.84, 392.84, 394.56, 395.70, 397.53, 399.25, 402.13, 403.08, 403.24, 404.10, 404.85, 405.98, 406.42, 406.91, 409.63]
+        }
+      };
       /* Tap-a-word dictionary for the Quran lessons' English lines.
          Source: ECDICT (github.com/skywind3000/ECDICT, open 英汉词典),
          extracted at build time for just the words these lessons
@@ -959,9 +1019,10 @@
         audios.forEach(function (au) {
           var table = VERSE_TIMINGS[au.getAttribute("data-asrc")];
           if (!table) return;
+          var ends = AR_WORD_ENDS[au.getAttribute("data-asrc")] || {};
           var lookup = {};
           table.forEach(function (row) {
-            lookup[row[0]] = { start: row[1], arEnd: row[2], end: row[3], arSp: [row[4], row[5]], enSp: [row[6], row[7]] };
+            lookup[row[0]] = { start: row[1], arEnd: row[2], end: row[3], arSp: [row[4], row[5]], enSp: [row[6], row[7]], arW: ends[row[0]] || null };
           });
           au._timing = lookup;
         });
@@ -972,7 +1033,7 @@
             var au = audios[i];
             if (au._timing && au._timing[key]) {
               var tm = au._timing[key];
-              verseMap.set(v, { audio: au, start: tm.start, arEnd: tm.arEnd, end: tm.end, arSp: tm.arSp, enSp: tm.enSp });
+              verseMap.set(v, { audio: au, start: tm.start, arEnd: tm.arEnd, end: tm.end, arSp: tm.arSp, enSp: tm.enSp, arW: tm.arW });
               v.classList.add("q-tap");
               v.setAttribute("role", "button");
               v.setAttribute("title", "点读这一节");
@@ -1016,10 +1077,14 @@
 
         /* ---- reading cursor （诵读光标） ----
            A word-by-word sweep driven purely by the playhead: within a
-           verse, the fraction of the Arabic speech window already played
-           maps onto that fraction of the verse's Arabic words, and the
-           English speech window likewise onto its English words — so the
-           moment a verse finishes, both lines stand covered end to end.
+           verse, the Arabic words are painted from measured per-word
+           end times (see AR_WORD_ENDS / paintLineEnds), because the
+           recitation's pace is anything but even — an even sweep left
+           the last Arabic words unpainted after the voice had already
+           finished them. The English words still map the played
+           fraction of the English speech window onto the line, which
+           tracks that reading well. Either way, the moment a verse
+           finishes, both lines stand covered end to end.
            The windows are the voice's real start/stop inside each
            per-verse file (see VERSE_TIMINGS): the files' silent head and
            tail padding no longer drags the sweep ahead of the sound.
@@ -1059,12 +1124,39 @@
           if (t >= win[1]) return 1;
           return (t - win[0]) / (win[1] - win[0]);
         }
+        /* The Arabic line painted from measured per-word end times
+           (AR_WORD_ENDS) instead of an even sweep: a word stands read
+           once the playhead passes the moment the reciter's voice
+           actually leaves it, so the sweep follows the recitation's
+           real pace — held on an elongated word, hurrying with a
+           quick run — and the line stands fully covered the moment
+           the voice stops, not when the segment's clock runs out.
+           Same span-state bookkeeping as paintLine. */
+        function paintLineEnds(spans, ends, t, playing, winStart) {
+          var n = spans.length;
+          if (!n) return;
+          var upto = 0;
+          while (upto < n && t >= ends[upto]) upto++;
+          var cur = playing && t > winStart && upto < n ? upto : -1;
+          spans.forEach(function (sp, i) {
+            var want = i < upto ? "r" : (i === cur ? "n" : "");
+            if (sp._st === want) return;
+            sp._st = want;
+            sp.classList.toggle("q-read", want === "r");
+            sp.classList.toggle("q-now", want === "n");
+          });
+        }
         function paintCursor(au) {
           var t = au.currentTime;
           var playing = !au.paused && !au.ended;
           verseMap.forEach(function (info, el) {
             if (info.audio !== au) return;
-            paintLine(wordSpans(el, ".q-ar .q-w"), speechFrac(t, info.arSp), playing);
+            var arSpans = wordSpans(el, ".q-ar .q-w");
+            if (info.arW && info.arW.length === arSpans.length) {
+              paintLineEnds(arSpans, info.arW, t, playing, info.arSp[0]);
+            } else {
+              paintLine(arSpans, speechFrac(t, info.arSp), playing);
+            }
             paintLine(wordSpans(el, ".q-en .q-w"), speechFrac(t, info.enSp), playing);
           });
         }
