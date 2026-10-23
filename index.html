@@ -1010,22 +1010,25 @@
       /* ---------- tap-to-listen (Quran lessons) ----------
          Each verse block maps to one [start, end] segment of one audio
          player; the Arabic recitation and the English reading inside a
-         segment play together and are never split. Tapping a verse seeks
-         to its start and plays just that segment, auto-pausing at its end.
-         Tapping the same verse while it plays pauses in place (progress
-         frozen, verse stays highlighted in a paused style); tapping it
-         again resumes from the frozen point — and that resume chains:
-         at the verse end playback no longer stops but continues into
-         the next verse, and the next, until the track ends or another
-         verse is tapped. Tapping any other verse switches to it at once,
-         as a single segment again. Pressing the player's own play button
-         plays the whole track continuously — the highlight follows verse
-         by verse and no segment-end pause applies.
-         While any of this plays, the reader auto-scrolls: each time the
-         playhead enters a new verse, that verse glides to the top of the
-         reading area, just under the pinned player. Following acts only
-         on verse changes, so a manual scroll mid-verse is never fought;
-         it resumes by itself when the next verse begins.
+         segment play together and are never split. Playback itself is
+         continuous: tapping a verse seeks to its start and plays from
+         there straight through every following verse to the end of the
+         track — a verse boundary never pauses anything. Tapping the
+         verse currently being read pauses in place (progress frozen,
+         verse stays highlighted in a paused style); tapping it again
+         resumes from the frozen point and keeps playing across verse
+         ends the same way. Tapping any other verse jumps to its start
+         at once and continues from there. The player's own play/pause
+         button uses the same continuous semantics, and the highlight
+         follows verse by verse.
+         While this plays, the reader auto-scrolls around the word
+         currently being read (the .q-now word): it stays in a comfort
+         band in the middle of the reading area under the pinned player,
+         gliding smoothly as the recitation advances, verse after verse.
+         A manual scroll is never fought — the follow yields until the
+         current word is about to leave the visible area or a new verse
+         begins, then it takes over again. Pausing stops all scrolling;
+         a seek re-centers on the new current word.
          A reading cursor rides the same playhead (see "reading cursor"
          below): words already read carry a highlighter wash — the
          Arabic words across the verse's Arabic segment, the English
@@ -1062,24 +1065,22 @@
         });
         if (!verseMap.size) return;
 
-        var seg = null;        /* verse segment targeted by taps: {audio, el, start, end} */
-        var segStop = null;    /* end time at which seg playback auto-pauses */
-
         /* A play() issued by a verse tap must not be mistaken for the user
            pressing the player's own play button. Discrimination is purely
            event-driven (no clocks, no timers): each tap that starts a
            paused player leaves a one-shot token on that player
-           (au._tapPlay); the next "play" event on it spends the token and
-           keeps the segment, while a "play" with no token came from the
-           player's own controls and ends segment mode. Any "pause" or
-           "ended" on the player also drops an unspent token. */
+           (au._tapPlay); the next "play" event on it spends the token,
+           while a "play" with no token came from the player's own
+           controls and clears any stale paused-verse mark. Any "pause" or
+           "ended" on the player also drops an unspent token. Playback
+           semantics are identical either way — continuous to the end of
+           the track — so the token only guards the paused mark. */
         function tapPlay(au) {
           if (au.paused) au._tapPlay = true;
           var p = au.play();
           if (p && p.catch) p.catch(function () { au._tapPlay = false; });
         }
-        function clearSeg() {
-          seg = null; segStop = null;
+        function clearPausedMarks() {
           body.querySelectorAll(".q-verse.q-paused").forEach(function (x) { x.classList.remove("q-paused"); });
         }
         function setPlaying(verseEl) {
@@ -1227,125 +1228,155 @@
           rafId = null;
           var any = false;
           audios.forEach(function (au) {
-            if (au._timing && !au.paused && !au.ended) { paintCursor(au); any = true; }
+            if (au._timing && !au.paused && !au.ended) { paintCursor(au); followRecenter(au); any = true; }
           });
           if (any) rafId = requestAnimationFrame(cursorTick);
         }
         function cursorKick() { if (rafId === null) rafId = requestAnimationFrame(cursorTick); }
 
-        /* ---- auto-scroll follow ----
-           follow.verse is the verse the reader was last aligned to. The
-           follow acts only when the playing verse changes (followCheck is
-           called from timeupdate / play / seeked), so within one verse
-           the page never scrolls on its own and never fights a reader who
-           scrolled by hand; the next verse change re-aligns by itself. */
-        var follow = { verse: null };
-        function followScrollTo(el) {
-          var box = body.querySelector(".audio-box");
+        /* ---- auto-scroll follow: keep the current word centered ----
+           The follow target is the word being read right now (.q-now in
+           the verse under the playhead), not the verse block. While
+           anything plays (followRecenter runs on every cursor frame,
+           timeupdate, play and seeked), the word is kept inside a
+           comfort band — the middle 35%–65% of the reading area below
+           the pinned player. Inside the band nothing scrolls, so there
+           is no per-word jitter; once the word drifts out of the band,
+           the page glides smoothly to bring it back to the center, in
+           small steps, line by line, through the Arabic segment, the
+           English segment and across verse boundaries alike. A verse
+           change re-centers unconditionally, so the follow never breaks
+           at a boundary. Between word occurrences (a pause inside a
+           verse, before the first word) the anchor falls back to the
+           last word already read, then the verse's first word, then the
+           verse block itself. Paused playback never scrolls.
+           A manual scroll yields: wheel / touch scrolling sets
+           follow.yielding, and the follow then stays out of the way
+           until the current word is about to leave the visible area
+           entirely, or a new verse begins, or a seek forces a re-center
+           (followRecenter's force flag). */
+        var follow = { verse: null, yielding: false };
+        function followRegion() {
           var bodyRect = body.getBoundingClientRect();
-          var elRect = el.getBoundingClientRect();
-          var hang = 0;   /* distance from the reader's top edge to the pinned player's bottom edge */
+          var top = bodyRect.top;
+          var box = body.querySelector(".audio-box");
           if (box) {
             var br = box.getBoundingClientRect();
-            /* Once pinned, measure the player's bottom edge directly.
-               Before it pins (reader still at the very top), it rides one
-               body-padding lower than its pinned spot. */
-            hang = body.scrollTop > 2 ? br.bottom - bodyRect.top : br.height + 20;
+            /* Once pinned, the usable area starts at the player's
+               bottom edge. Before it pins (reader still at the very
+               top), it rides one body-padding lower than its pinned
+               spot. */
+            top = body.scrollTop > 2 ? Math.max(top, br.bottom) : top + br.height + 20;
           }
-          var delta = elRect.top - (bodyRect.top + hang + 8);
-          if (Math.abs(delta) < 2) return;
+          return { top: top, bottom: bodyRect.bottom, height: Math.max(1, bodyRect.bottom - top) };
+        }
+        function followTargetEl(au) {
+          var v = verseForTime(au, au.currentTime);
+          if (!v) return null;
+          var now = v.querySelector(".q-w.q-now");
+          if (now) return now;
+          var spans = v.querySelectorAll(".q-w");
+          var lastRead = null;
+          for (var i = 0; i < spans.length; i++) {
+            if (spans[i].classList.contains("q-read")) lastRead = spans[i];
+          }
+          if (lastRead) return lastRead;
+          return spans.length ? spans[0] : v;
+        }
+        function followGlide(targetTop) {
           var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
           try {
-            body.scrollTo({ top: body.scrollTop + delta, behavior: reduce ? "auto" : "smooth" });
+            body.scrollTo({ top: targetTop, behavior: reduce ? "auto" : "smooth" });
           } catch (err) {
-            body.scrollTop = body.scrollTop + delta;
+            body.scrollTop = targetTop;
           }
         }
-        function followCheck(au) {
-          if (au.paused) return;
+        function followRecenter(au, force) {
+          if (au.paused || au.ended) return;
           var v = verseForTime(au, au.currentTime);
-          if (!v || v === follow.verse) return;
-          follow.verse = v;
-          followScrollTo(v);
+          if (!v) return;
+          var verseChanged = v !== follow.verse;
+          if (verseChanged) { follow.verse = v; follow.yielding = false; }
+          var el = followTargetEl(au);
+          if (!el) return;
+          var reg = followRegion();
+          var r = el.getBoundingClientRect();
+          var cy = r.top + r.height / 2;
+          if (follow.yielding && !verseChanged && !force) {
+            /* The reader scrolled by hand: stay out of the way unless
+               the current word is about to leave the visible area. */
+            if (r.bottom > reg.top + 24 && r.top < reg.bottom - 24) return;
+            follow.yielding = false;
+          }
+          if (!force && !verseChanged &&
+              cy >= reg.top + reg.height * 0.35 && cy <= reg.top + reg.height * 0.65) return;
+          var delta = cy - (reg.top + reg.height * 0.5);
+          if (Math.abs(delta) < 2) return;
+          followGlide(body.scrollTop + delta);
         }
+        body.addEventListener("wheel", function () { follow.yielding = true; }, { passive: true });
+        body.addEventListener("touchmove", function () { follow.yielding = true; }, { passive: true });
         audios.forEach(function (au) {
           if (!au._timing) return;
           au.addEventListener("timeupdate", function () {
-            if (seg && seg.audio === au && segStop !== null && au.currentTime >= segStop) {
-              au.pause();
-              var doneEl = seg.el;
-              clearSeg();           /* finished: next tap on it replays from its start */
-              setPlaying(doneEl);   /* the verse just read stays highlighted */
-              follow.verse = null;  /* a replay of this verse re-aligns it */
-              paintCursor(au);      /* frozen at the segment end: the verse stands fully covered */
-              return;
-            }
+            /* Continuous play: nothing here ever pauses at a verse
+               boundary — the highlight simply moves on to the next verse. */
             if (!au.paused) setPlaying(verseForTime(au, au.currentTime));
             paintCursor(au);
-            followCheck(au);
+            followRecenter(au);
           });
           au.addEventListener("play", function () {
             audios.forEach(function (o) { if (o !== au && !o.paused) o.pause(); });
             if (au._tapPlay) {
               au._tapPlay = false;   /* this play was ordered by a verse tap */
-            } else if (seg) {
-              /* Started from the player's own controls: play the whole
-                 track continuously, no segment-end pause. */
-              clearSeg();
+            } else {
+              /* Started from the player's own controls: the same
+                 continuous play; a paused-verse mark left by an earlier
+                 tap-pause is stale once the track runs again. */
+              clearPausedMarks();
             }
             setPlaying(verseForTime(au, au.currentTime));
             paintCursor(au);
             cursorKick();
-            followCheck(au);
+            followRecenter(au);
           });
           au.addEventListener("pause", function () { au._tapPlay = false; paintCursor(au); });
           au.addEventListener("seeked", function () {
-            if (seg && seg.audio === au) {
-              /* Our verse jump lands on the segment start — and a browser
-                 may fire "seeked" more than once for it, so recognize the
-                 jump by where the playhead landed, not by counting events.
-                 A seek landing anywhere else is the user's own: seg ends. */
-              if (Math.abs(au.currentTime - seg.start) >= 0.75) clearSeg();
-            }
             setPlaying(verseForTime(au, au.currentTime));
             paintCursor(au);
-            followCheck(au);
+            /* After a progress-bar drag (or a verse-tap jump), re-center
+               on wherever the playhead now sits. */
+            followRecenter(au, true);
           });
-          au.addEventListener("ended", function () { au._tapPlay = false; clearSeg(); setPlaying(null); follow.verse = null; clearCursor(); });
+          au.addEventListener("ended", function () { au._tapPlay = false; clearPausedMarks(); setPlaying(null); follow.verse = null; follow.yielding = false; clearCursor(); });
         });
         verseMap.forEach(function (info, el) {
           el.addEventListener("click", function () {
             var au = info.audio;
-            if (seg && seg.audio === au && !au.paused &&
-                verseForTime(au, au.currentTime) === el) {
-              /* Tap the verse being read — in single-segment play that is
-                 the tapped verse itself; in chained play (below) it is
-                 whichever verse the playhead has reached: pause in place
-                 and re-anchor the segment to this verse. */
+            var current = verseForTime(au, au.currentTime) === el;
+            if (current && !au.paused && !au.ended) {
+              /* Tap the verse being read: pause in place, progress
+                 frozen. Whichever verse the playhead has reached is
+                 "current", so this works the same after playback has
+                 crossed any number of verse boundaries on its own. */
               au.pause();
               el.classList.add("q-paused");
-              seg.el = el; seg.start = info.start; seg.end = info.end;
               return;
             }
-            if (seg && seg.audio === au && au.paused && seg.el === el) {
-              /* Tap again while paused on this verse: resume from the
-                 frozen point — and the resume chains: segStop is lifted,
-                 so at this verse's end playback continues into the next
-                 verse instead of stopping. The chain runs until the
-                 track ends, the verse being read is tapped to pause, or
-                 another verse is tapped. */
+            if (current && au.paused) {
+              /* Tap the verse the playhead rests in: resume from the
+                 frozen point and keep playing continuously — across
+                 this verse's end and every later one, until the track
+                 ends or a tap pauses again. */
               el.classList.remove("q-paused");
-              seg.chain = true;
-              segStop = null;
               tapPlay(au);
               return;
             }
-            /* Any other verse (or any verse while stopped): switch to it
-               and play just that segment, auto-pausing at its end. */
+            /* Any other verse (or any verse while the playhead sits
+               elsewhere): jump to its start at once and play
+               continuously from there; no verse end ever stops it. */
             audios.forEach(function (o) { if (o !== au && !o.paused) o.pause(); });
-            clearSeg();
-            seg = { audio: au, el: el, start: info.start, end: info.end, chain: false };
-            segStop = info.end;
+            clearPausedMarks();
             try { au.currentTime = info.start; } catch (err) {}
             setPlaying(el);
             tapPlay(au);
