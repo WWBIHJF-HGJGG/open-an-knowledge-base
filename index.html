@@ -3426,9 +3426,15 @@
          .e-word spans are painted from the playhead alone — read
          words carry the gold wash, the word at the playhead carries
          the wash plus the gold edge — exactly the lesson cursor's
-         language. The page NEVER scrolls for this: no follow, no
-         centering. Word taps only open the lookup card and never
-         pause this audio. Seeking through the player's own bar
+         language. The page never follows the playhead on its own,
+         but when playback (re)starts — or the playhead is moved
+         while playing — and the word at the playhead is off-screen,
+         the view makes ONE smooth glide to it (see glideToPlayhead
+         below): articles whose opening blocks the audio never reads
+         start their first timed word well below the fold, and the
+         reader should land where the voice actually is, not stay
+         parked on the un-read head matter. Word taps only open the
+         lookup card and never pause this audio. Seeking through the player's own bar
          repaints at once (the paint is a pure function of
          currentTime). Closing the reader pauses every audio in the
          body, this one included (see the reader close handler). */
@@ -3500,6 +3506,42 @@
         au.addEventListener("pause", paint);
         au.addEventListener("ended", paint);
         au.addEventListener("timeupdate", paint);
+        /* One smooth jump to where playback actually is. The glide
+           is armed only by a user pressing play or by a seek made
+           while playing, and it lands when the audio itself reports
+           "playing" — i.e. once the file has loaded enough that the
+           voice has really started, not on the tap. It fires only
+           when the word at the playhead is fully out of view, so a
+           reader already looking at the right place is never moved,
+           and it never repeats during playback (no follow). The
+           glide itself is the site's shared smoothTo: hand-animated
+           easeInOutCubic, aborted by any wheel / touch / scroll key,
+           instant under prefers-reduced-motion. */
+        function wordIndexAt(t) {
+          var lo = 0, hi = n - 1, ans = -1;
+          while (lo <= hi) {
+            var mid = (lo + hi) >> 1;
+            if (tt[mid] <= t) { ans = mid; lo = mid + 1; } else hi = mid - 1;
+          }
+          return ans < 0 ? 0 : ans;
+        }
+        function glideToPlayhead() {
+          var sp = spans[wordIndexAt(au.currentTime || 0)];
+          if (!sp) return;
+          var r = sp.getBoundingClientRect();
+          if (r.bottom > 0 && r.top < window.innerHeight) return;
+          smoothTo(sp);
+        }
+        var glidePending = false;
+        au.addEventListener("play", function () { glidePending = true; });
+        au.addEventListener("seeked", function () {
+          if (!au.paused && !au.ended) glidePending = true;
+        });
+        au.addEventListener("playing", function () {
+          if (!glidePending) return;
+          glidePending = false;
+          glideToPlayhead();
+        });
       }
 
       /* ---------- tap-a-word lookup (点词查意) ----------
