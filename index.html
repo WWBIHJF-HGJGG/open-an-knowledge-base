@@ -354,8 +354,9 @@
          list set clearly apart below the panel on plain paper.
          The panel is an absolutely positioned layer behind the head
          and controls (its height is synced to theirs by script — see
-         "photo navigation panel" in the script), so the controls keep
-         their page-level sticky behaviour exactly as before. */
+         "photo navigation panel" in the script). The controls are
+         ordinary in-flow content: they scroll away with the page and
+         never pin over the reading list. */
       .read-sec { position: relative; }
       .nav-panel {
         position: absolute; top: 0; left: 0; right: 0; z-index: 0;
@@ -414,23 +415,16 @@
         .reveal { opacity: 1; transform: none; transition: none; }
         .list-anim { animation: none; }
         .nav-panel-img { animation: none; }
-        .controls { transition: none; }
       }
 
-      .controls-anchor { height: 0; }
+      /* The controls live on the photograph and scroll away with the
+         page like everything else — deliberately NOT sticky: a bar
+         pinned to the top would sit over the reading list and eat a
+         large share of the viewport. position:relative + z-index
+         only lifts them above the photo layer behind them. */
       .controls {
-        position: sticky; top: 0; z-index: 20;
+        position: relative; z-index: 1;
         padding: 18px 26px 14px;
-        transition: background-color 0.35s ease, box-shadow 0.35s ease;
-      }
-      /* Once the controls pin to the top they leave the photograph
-         behind: a warm dark-glass bar takes over, so the ivory-on-glass
-         styling stays legible over the paper list scrolling beneath. */
-      .controls.is-stuck {
-        background: rgba(26, 19, 10, 0.78);
-        -webkit-backdrop-filter: blur(16px) saturate(1.25); backdrop-filter: blur(16px) saturate(1.25);
-        border-radius: 0 0 18px 18px;
-        box-shadow: 0 14px 30px rgba(26, 19, 10, 0.28);
       }
       @media (max-width: 639px) { .controls { padding-left: 20px; padding-right: 20px; } }
       .search-row { display: flex; gap: 10px; }
@@ -1234,7 +1228,6 @@
           <p class="read-stats" id="readStats"></p>
         </div>
 
-        <div class="controls-anchor" id="controlsAnchor" aria-hidden="true"></div>
         <div class="controls">
           <div class="search-row">
             <label class="search-box">
@@ -1820,7 +1813,7 @@
           readTitle: "今日阅读",
           stats: function (d0, d1, n, nt, nc, na) {
             return '共 <span class="ln">' + n + "</span> 条 · " + prettyDate(d0) + " 至 " + prettyDate(d1) +
-              '<span class="stats-l2"><span class="ln">' + nt + '</span> 条有全文 · <span class="ln">' + nc + '</span> 条有卡片 · <span class="ln">' + na + "</span> 条带音频</span>";
+              '<span class="stats-l2"><span class="ln">' + nt + '</span> 条全文 · <span class="ln">' + nc + '</span> 张卡片 · <span class="ln">' + na + "</span> 条音频</span>";
           },
           searchPh: "搜标题或正文，比如「古兰经」「mercy」",
           clearSearch: "清除搜索",
@@ -1836,11 +1829,11 @@
           fullChars: function (n) { return "全文 " + n + " 字"; },
           read: "读全文", listen: "听音频", listenArticle: "聆听文章", viewCard: "看卡片",
           thumbAlt: " 的推送卡片",
-          emptyNote: "本条建档时仅保留了标题。",
+          emptyNote: "这条只留下了标题，没有正文。",
           noResults: "没有找到符合的内容，换个关键词或栏目试试。",
           audioTitle: "本课音频",
           audioCredits: "原文诵读：阿法西 · 英译朗读：Ibrahim Walk",
-          audioHl: "读到的词会同步高亮",
+          audioHl: "读到的词会跟着亮起来",
           backCurrent: "回到当前词",
           home: "返回首页",
           close: "关闭", playPause: "播放或暂停", progress: "播放进度",
@@ -1852,7 +1845,7 @@
           missionBody: "知屿收拢的，是能滋养人的文字：《古兰经》的学习与信仰的思考，Yaqeen Institute 等机构的分享，温暖真诚的人文故事，还有一栏望向世界的科技文章。它们不喧哗，不贩卖焦虑——只愿每一次打开，都能带走一点安宁、一点明白、一点向善的力气。",
           missionValues: "宁静 · 温暖 · 真诚 · 理性 · 开放",
           footBrand: "知屿 · Open Horizon",
-          foot: function (d0) { return "存档自 " + d0 + " 起，每一次推送都完整保存于此。"; }
+          foot: function (d0) { return "从 " + d0 + " 起，每一篇都完整收在这里。"; }
         },
         en: {
           docTitle: "Open Horizon — Nourish the Soul",
@@ -1865,7 +1858,7 @@
           readTitle: "Today's Reading",
           stats: function (d0, d1, n, nt, nc, na) {
             return '<span class="ln">' + n + "</span> entries · " + prettyDate(d0) + " – " + prettyDate(d1) +
-              '<span class="stats-l2"><span class="ln">' + nt + '</span> with full text · <span class="ln">' + nc + '</span> with cards · <span class="ln">' + na + "</span> with audio</span>";
+              '<span class="stats-l2"><span class="ln">' + nt + '</span> full texts · <span class="ln">' + nc + '</span> cards · <span class="ln">' + na + "</span> audio</span>";
           },
           searchPh: "Search titles and full text — try “Qur'an” or “mercy”",
           clearSearch: "Clear search",
@@ -1878,15 +1871,15 @@
           menuCap: "Browse by theme",
           markLabel: "Choose a theme",
           count: function (n) { return n + (n === 1 ? " entry" : " entries"); },
-          fullChars: function (n) { return "Full text · " + n + " chars"; },
+          fullChars: function (n) { return "Full text · " + n + " characters"; },
           read: "Read", listen: "Listen", listenArticle: "Listen to Article", viewCard: "Card",
-          thumbAlt: " — push card",
-          emptyNote: "Only the title was kept when this entry was archived.",
+          thumbAlt: " — card",
+          emptyNote: "Only the title remains for this entry.",
           noResults: "Nothing matches — try another keyword or category.",
           audioTitle: "Lesson Audio",
           audioCredits: "Arabic recitation: Alafasy · English reading: Ibrahim Walk",
-          audioHl: "Words highlight as they are read",
-          backCurrent: "Back to current",
+          audioHl: "Words light up as they are read",
+          backCurrent: "Back to current word",
           home: "Back to home",
           close: "Close", playPause: "Play or pause", progress: "Playback progress",
           speak: "Listen", wordLabel: "Word meaning", closeWord: "Close", lemma: "Base form: ",
@@ -1897,7 +1890,7 @@
           missionBody: "Open Horizon gathers writing that truly nourishes: Qur'an study and reflections on faith, thoughtful pieces from institutes such as Yaqeen, warm and honest human stories, and a shelf of technology writing that looks out at the world. Nothing loud, nothing sold — just a few pages each time, leaving a little more peace, clarity, and kindness behind.",
           missionValues: "Calm · Warmth · Sincerity · Reason · Openness",
           footBrand: "Open Horizon · 知屿",
-          foot: function (d0) { return "Every push since " + d0 + " is kept here in full."; }
+          foot: function (d0) { return "Every piece since " + d0 + " is kept here in full."; }
         }
       };
       function S() { return STRINGS[LANG]; }
@@ -2573,18 +2566,21 @@
          at once and continues from there. The player's own play/pause
          button uses the same continuous semantics, and the highlight
          follows verse by verse.
-         While this plays, the reader auto-scrolls around the word
-         currently being read (the .q-now word): it is kept at the
-         center of the reading area under the pinned player (the
-         midpoint between the player's bottom edge and the viewport's
-         bottom), gliding smoothly as the recitation advances, verse
-         after verse. A manual scroll is never fought mid-drag, but
-         once the scrolling has been still for ~1.5s the follow
-         force-glides the current word back to that center; while the
-         word sits scrolled out of view during playback, a 「回到当前词」
+         While this plays, the reader auto-scrolls verse-anchored,
+         quran.com style: the moment a verse becomes current, its
+         block is glided to the top of the reading area under the
+         pinned player, so the verse being read owns the most
+         prominent place on screen and the finished verse above it
+         is pushed up out of sight; within a verse, the current word
+         (.q-now) only has to stay inside a comfort band of that
+         area. A manual scroll is never fought mid-drag, but once
+         the scrolling has been still for ~350ms the follow glides
+         the reading position back, fast and silky (a hand-eased
+         250–450ms, never native smooth scrolling); while the word
+         sits scrolled out of view during playback, a 「回到当前词」
          pill offers the same glide on tap. Pausing stops all
          scrolling — a paused reader never moves on its own; a seek
-         re-centers on the new current word.
+         re-anchors on the new current verse or word.
          A reading cursor rides the same playhead (see "reading cursor"
          below): words already read carry a highlighter wash — the
          Arabic words across the verse's Arabic segment, the English
@@ -2791,29 +2787,43 @@
         }
         function cursorKick() { if (rafId === null) rafId = requestAnimationFrame(cursorTick); }
 
-        /* ---- auto-scroll follow: keep the current word centered ----
-           The follow target is the word being read right now (.q-now in
-           the verse under the playhead), not the verse block, and its
-           home is the CENTER of the usable region below the pinned
-           player (the player's bottom edge to the viewport's bottom,
-           ~50%): wherever the recitation goes, the current word's line
-           returns to that center, gliding smoothly word by word and
-           line by line through the Arabic segment, the English segment
-           and across verse boundaries alike. A few pixels of tolerance
-           keep a word travelling along one line from jittering the
-           page. Between word occurrences (a pause inside a verse,
-           before the first word) the anchor falls back to the last
-           word already read, then the verse's first word, then the
-           verse block itself. Paused playback never scrolls.
+        /* ---- auto-scroll follow: verse-anchored (quran.com style) ----
+           The unit of prominence is the VERSE, not the word. The
+           moment a new verse becomes current, its block is glided so
+           its top sits just under the pinned player (region top +
+           8px): the verse being read owns the top of the screen and
+           the finished verse above it is pushed up out of sight. A
+           verse taller than the usable region cannot be anchored by
+           its block top without burying its opening lines, so its
+           current word's line is anchored near the region's top
+           (~30%) instead. Within a verse the follow tracks the word
+           being read (.q-now in the verse under the playhead; between
+           word occurrences — a pause inside a verse, before the
+           first word — the anchor falls back to the last word already
+           read, then the verse's first word, then the verse block
+           itself): the word is left alone while it sits anywhere
+           comfortably inside the region — below the player, above
+           the 65% line — and crossing that line glides its line to
+           ~38%. (The band's upper edge is the player, not a fixed
+           fraction, so a fresh verse anchor is never dragged back
+           down.) A word travelling along one line never scrolls the
+           page at all, so there is no jitter.
+           Every glide is eased by hand on rAF: native smooth
+           scrolling collapses inside this page's nested shell and
+           runs far too slowly besides. easeOutCubic over a
+           distance-scaled 250–450ms answers at once and settles
+           fast, silkily; prefers-reduced-motion jumps instantly.
+           While a glide is in flight the follow starts no other
+           (forced calls — a seek, the pill, the scroll-end return —
+           retarget it instead). Paused playback never scrolls.
            A manual scroll yields while it lasts: wheel / touch
-           scrolling sets follow.yielding, and the follow then stays
-           completely out of the way — even if the current word
-           scrolls off-screen — until the reader has been still for
-           ~1.5s; then the yield ends and the view is force-glided
-           back to the current word at the center target (one single
-           mechanism — the scroll listener's idle timer below — so
-           nothing fights or oscillates). A seek always forces a
-           re-center at once (followRecenter's force flag). */
+           scrolling sets follow.yielding and aborts any glide, and
+           the follow then stays completely out of the way — even if
+           the current word scrolls off-screen — until the reader
+           has been still for ~350ms; then the yield ends and the
+           view is force-glided back (one single mechanism — the
+           scroll listener's idle timer below — so nothing fights
+           or oscillates). */
         var follow = { verse: null, yielding: false };
         function followRegion() {
           var bodyRect = body.getBoundingClientRect();
@@ -2842,54 +2852,111 @@
           if (lastRead) return lastRead;
           return spans.length ? spans[0] : v;
         }
-        function followGlide(targetTop) {
+        /* Hand-eased glide of the reader's scroll position to dest:
+           easeOutCubic, 250–450ms scaled by distance (short hops
+           land at the fast end, long returns at the silky end). A
+           new call retargets the flight from wherever the page
+           currently sits; the reader grabbing the page (yielding)
+           aborts it mid-flight. */
+        var glideAnim = { id: 0, raf: 0 };
+        function stopGlide() {
+          glideAnim.id++;
+          if (glideAnim.raf) cancelAnimationFrame(glideAnim.raf);
+          glideAnim.raf = 0;
+        }
+        function followGlideTo(dest) {
+          var maxTop = Math.max(0, body.scrollHeight - body.clientHeight);
+          dest = Math.max(0, Math.min(dest, maxTop));
+          var start = body.scrollTop;
+          var dist = dest - start;
           var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-          try {
-            body.scrollTo({ top: targetTop, behavior: reduce ? "auto" : "smooth" });
-          } catch (err) {
-            body.scrollTop = targetTop;
-          }
+          if (Math.abs(dist) < 1 || reduce) { stopGlide(); body.scrollTop = dest; return; }
+          var dur = Math.min(450, Math.max(250, Math.abs(dist) * 0.45));
+          var id = ++glideAnim.id;
+          if (glideAnim.raf) cancelAnimationFrame(glideAnim.raf);
+          var t0 = null;
+          var step = function (ts) {
+            if (id !== glideAnim.id) return;
+            if (follow.yielding) { glideAnim.raf = 0; return; }
+            if (t0 === null) t0 = ts;
+            var p = (ts - t0) / dur;
+            if (p >= 1) { body.scrollTop = dest; glideAnim.raf = 0; return; }
+            var e = 1 - Math.pow(1 - p, 3);
+            body.scrollTop = start + dist * e;
+            glideAnim.raf = requestAnimationFrame(step);
+          };
+          glideAnim.raf = requestAnimationFrame(step);
         }
         function followRecenter(au, force) {
           if (au.paused || au.ended) return;
           var v = verseForTime(au, au.currentTime);
           if (!v) return;
-          var verseChanged = v !== follow.verse;
-          if (verseChanged) follow.verse = v;
           var el = followTargetEl(au);
           if (!el) return;
-          var reg = followRegion();
-          var r = el.getBoundingClientRect();
-          var cy = r.top + r.height / 2;
           if (follow.yielding && !force) {
             /* The reader is scrolling by hand: never fight it, not
                even when the current word leaves the visible area.
+               follow.verse is deliberately left stale here, so if a
+               verse boundary was crossed during the scroll the
+               scroll-end return below applies the verse anchor.
                The yield ends when the scrolling stops — the scroll
-               listener's 1.5s idle timer clears it and force-recenters
-               on the center target. */
+               listener's 350ms idle timer clears it and
+               force-recenters. */
             return;
           }
-          /* The target is the CENTER of the usable region (the pinned
-             player's bottom edge to the viewport's bottom): wherever
-             the recitation goes, the current word's line is brought
-             back to that center. Within a few pixels of it nothing
-             moves, so a word travelling along one line never jitters
-             the page; crossing to the next line glides it back. */
-          var delta = cy - (reg.top + reg.height * 0.5);
-          if (Math.abs(delta) <= 6) return;
-          followGlide(body.scrollTop + delta);
+          if (glideAnim.raf && !force) return;   /* a glide owns the page */
+          var reg = followRegion();
+          if (v !== follow.verse) {
+            /* A new verse is current: anchor the verse itself. Its
+               block top goes to just under the pinned player
+               (region top + 8px) — unless the verse is taller than
+               the usable region, in which case the current word's
+               line anchors near the region's top (~30%) so its
+               opening lines stay in view. */
+            follow.verse = v;
+            var vr = v.getBoundingClientRect();
+            if (vr.height > reg.height * 0.95) {
+              var r0 = el.getBoundingClientRect();
+              followGlideTo(body.scrollTop + (r0.top + r0.height / 2) - (reg.top + reg.height * 0.30));
+            } else {
+              followGlideTo(body.scrollTop + vr.top - (reg.top + 8));
+            }
+            return;
+          }
+          /* Same verse: the current word is left alone while it
+             sits comfortably inside the region — anywhere below
+             the player and above the 65% line. The band's upper
+             edge is the player itself, NOT a fixed fraction: a
+             verse fresh from its anchor has its first word high
+             in the region (~15%), and a 35% band edge would drag
+             the just-anchored verse straight back down, undoing
+             the anchor. Crossing the 65% line as the reading
+             descends (or a forced call) glides the word's line to
+             ~38%, high in the region with the text still to come
+             spread out below it; a word travelling along one line
+             never scrolls the page at all, so there is no jitter. */
+          var r = el.getBoundingClientRect();
+          var cy = r.top + r.height / 2;
+          if (!force && cy <= reg.top + reg.height * 0.65 && r.top >= reg.top + 2) return;
+          var delta = cy - (reg.top + reg.height * 0.38);
+          if (Math.abs(delta) <= 4) return;
+          followGlideTo(body.scrollTop + delta);
         }
         body.addEventListener("wheel", function () { follow.yielding = true; }, { passive: true });
         body.addEventListener("touchmove", function () { follow.yielding = true; }, { passive: true });
         /* ---- scroll-end force-return + 「回到当前词」 pill ----
            While anything plays, once the reader has been still for
-           ~1.5s the follow takes over again and force-glides the
-           current word back to the CENTER of the usable region —
-           wherever it was scrolled to. While the current word is
-           scrolled out of the usable area during playback, a small
-           pill floats at the reader's lower right; tapping it
-           performs the same glide at once. Paused playback never
-           auto-scrolls and never shows the pill. */
+           ~350ms the follow takes over again and force-glides back
+           to the reading position — the current verse's anchor, or
+           the current word high in the usable region — wherever it
+           was scrolled to. The timer hangs off scroll events (not
+           touchend), so momentum scrolling counts as still
+           scrolling and the return lands only once the page has
+           truly settled. While the current word is scrolled out of
+           the usable area during playback, a small pill floats at
+           the reader's lower right; tapping it performs the same
+           glide at once. Paused playback never auto-scrolls and
+           never shows the pill. */
         var followPill = document.getElementById("followPill");
         if (!followPill) {
           followPill = document.createElement("button");
@@ -2929,10 +2996,16 @@
           if (scrollEndTimer) clearTimeout(scrollEndTimer);
           scrollEndTimer = setTimeout(function () {
             scrollEndTimer = null;
+            /* The yield always ends when scrolling stops — even
+               while paused (when there is nothing to re-center on):
+               leaving it set would mute the follow for the whole
+               next playback, since nothing else clears it. The
+               'play' handler below clears it too, as a backstop. */
+            follow.yielding = false;
             var au = followPillAudio();
-            if (au) { follow.yielding = false; followRecenter(au, true); }
+            if (au) followRecenter(au, true);
             updateFollowPill();
-          }, 1500);
+          }, 350);
         }, { passive: true });
         audios.forEach(function (au) {
           if (!au._timing) return;
@@ -2956,6 +3029,9 @@
             setPlaying(verseForTime(au, au.currentTime));
             paintCursor(au);
             cursorKick();
+            /* A fresh play always re-engages the follow: a yield left
+               over from scrolling while paused must not mute it. */
+            follow.yielding = false;
             followRecenter(au);
           });
           au.addEventListener("pause", function () { au._tapPlay = false; paintCursor(au); updateFollowPill(); });
@@ -2966,7 +3042,7 @@
                on wherever the playhead now sits. */
             followRecenter(au, true);
           });
-          au.addEventListener("ended", function () { au._tapPlay = false; clearPausedMarks(); setPlaying(null); follow.verse = null; follow.yielding = false; clearCursor(); updateFollowPill(); });
+          au.addEventListener("ended", function () { au._tapPlay = false; clearPausedMarks(); setPlaying(null); follow.verse = null; follow.yielding = false; stopGlide(); clearCursor(); updateFollowPill(); });
         });
         verseMap.forEach(function (info, el) {
           el.addEventListener("click", function () {
@@ -3446,13 +3522,10 @@
          the layer ends a breath below the chips, so the article list
          stays on plain paper, clearly apart from the panel. Its
          height is measured from the head + controls it backs — both
-         change height with language, chip wrapping and width — and
-         once the controls pin to the top of the screen they pick up
-         the dark-glass bar (.is-stuck), watched from a zero-height
-         anchor parked exactly where the controls begin. */
+         change height with language, chip wrapping and width. The
+         controls are static in-flow content (no sticky bar). */
       var navPanel = document.getElementById("navPanel");
       var controlsEl = document.querySelector(".controls");
-      var controlsAnchor = document.getElementById("controlsAnchor");
       function syncNavPanel() {
         if (!navPanel || !controlsEl) return;
         navPanel.style.height = (controlsEl.offsetTop + controlsEl.offsetHeight + 18) + "px";
@@ -3465,13 +3538,6 @@
           navPanelRO.observe(controlsEl);
         }
         window.addEventListener("resize", syncNavPanel);
-        if (window.IntersectionObserver && controlsAnchor) {
-          new IntersectionObserver(function (entries) {
-            entries.forEach(function (en) {
-              controlsEl.classList.toggle("is-stuck", !en.isIntersecting && en.boundingClientRect.top < 0);
-            });
-          }, { threshold: 0 }).observe(controlsAnchor);
-        }
       }
 
       /* ---------- smooth in-page navigation ----------
